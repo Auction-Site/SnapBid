@@ -1,0 +1,42 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title th:text="${title}">Home</title>
+        <link rel="stylesheet" th:href="@{/css/style.css}" />
+    </head>
+    <body>
+        <div th:replace="~{fragments/header :: header}"></div>
+
+        <main class="container">
+            <div class="jumbotron">
+                <h1>Welcome to My Web Application</h1>
+                <p>
+                    This is a starter template for a Spring Boot web
+                    application.
+                </p>
+                <a href="/login" class="btn">Get Started</a>
+            </div>
+
+            <div class="features">
+                <div class="feature-card">
+                    <h3>Feature 1</h3>
+                    <p>Description of feature 1 goes here.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Feature 2</h3>
+                    <p>Description of feature 2 goes here.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Feature 3</h3>
+                    <p>Description of feature 3 goes here.</p>
+                </div>
+            </div>
+        </main>
+
+        <div th:replace="fragments/footer :: footer"></div>
+
+        <script th:src="@{/js/script.js}"></script>
+    </body>
+</html>
