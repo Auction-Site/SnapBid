@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Create Auction - SnapBid</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <link rel="stylesheet" href="/css/style.css">
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+            <div class="container">
+                <a class="navbar-brand fw-bold text-primary" href="/">SnapBid</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <form class="d-flex mx-auto" style="width: 40%;">
+                        <input class="form-control me-2" type="search" placeholder="Search auctions...">
+                        <button class="btn btn-outline-primary" type="submit"><i class="fas fa-search"></i></button>
+                    </form>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/"><i class="fas fa-home"></i> Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auctions"><i class="fas fa-gavel"></i> Auctions</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/create"><i class="fas fa-plus-circle"></i> Create</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/profile"><i class="fas fa-user"></i> Profile</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-outline-primary ms-2" href="/login">Login</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <main class="py-4">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h2 class="card-title text-center mb-4">Create New Auction</h2>
+                                <form>
+                                    <!-- Item Details -->
+                                    <div class="mb-4">
+                                        <h5 class="mb-3">Item Details</h5>
+                                        <div class="mb-3">
+                                            <label for="itemName" class="form-label">Item Name</label>
+                                            <input type="text" class="form-control" id="itemName" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="category" class="form-label">Category</label>
+                                            <select class="form-select" id="category" required>
+                                                <option value="">Select a category</option>
+                                                <option value="photography">Photography</option>
+                                                <option value="art">Art</option>
+                                                <option value="fashion">Fashion</option>
+                                                <option value="electronics">Electronics</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="description" class="form-label">Description</label>
+                                            <textarea class="form-control" id="description" rows="4" required></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- Images -->
+                                    <div class="mb-4">
+                                        <h5 class="mb-3">Images</h5>
+                                        <div class="mb-3">
+                                            <label for="images" class="form-label">Upload Images</label>
+                                            <input type="file" class="form-control" id="images" multiple accept="image/*">
+                                            <div class="form-text">Upload up to 5 images. First image will be the cover image.</div>
+                                        </div>
+                                        <div class="row mt-3" id="imagePreview">
+                                            <!-- Image previews will be shown here -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Auction Details -->
+                                    <div class="mb-4">
+                                        <h5 class="mb-3">Auction Details</h5>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="startingBid" class="form-label">Starting Bid</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">$</span>
+                                                    <input type="number" class="form-control" id="startingBid" min="0" step="0.01" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="reservePrice" class="form-label">Reserve Price (Optional)</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">$</span>
+                                                    <input type="number" class="form-control" id="reservePrice" min="0" step="0.01">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="startDate" class="form-label">Start Date</label>
+                                                <input type="datetime-local" class="form-control" id="startDate" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="endDate" class="form-label">End Date</label>
+                                                <input type="datetime-local" class="form-control" id="endDate" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Shipping Details -->
+                                    <div class="mb-4">
+                                        <h5 class="mb-3">Shipping Details</h5>
+                                        <div class="mb-3">
+                                            <label for="shippingMethod" class="form-label">Shipping Method</label>
+                                            <select class="form-select" id="shippingMethod" required>
+                                                <option value="">Select shipping method</option>
+                                                <option value="standard">Standard Shipping</option>
+                                                <option value="express">Express Shipping</option>
+                                                <option value="pickup">Local Pickup</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="shippingCost" class="form-label">Shipping Cost</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="shippingCost" min="0" step="0.01" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Terms and Conditions -->
+                                    <div class="mb-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="terms" required>
+                                            <label class="form-check-label" for="terms">
+                                                I agree to the <a href="/terms">Terms and Conditions</a> and confirm that I have the right to sell this item.
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-primary btn-lg">Create Auction</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-dark text-white py-5 mt-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <h3>About SnapBid</h3>
+                        <p>Your trusted platform for online auctions. Buy and sell unique items with confidence.</p>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <h3>Quick Links</h3>
+                        <ul class="list-unstyled">
+                            <li><a href="/about" class="text-white-50 text-decoration-none">About Us</a></li>
+                            <li><a href="/contact" class="text-white-50 text-decoration-none">Contact</a></li>
+                            <li><a href="/terms" class="text-white-50 text-decoration-none">Terms & Conditions</a></li>
+                            <li><a href="/privacy" class="text-white-50 text-decoration-none">Privacy Policy</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <h3>Connect With Us</h3>
+                        <div class="d-flex gap-3">
+                            <a href="#" class="text-white"><i class="fab fa-facebook fa-2x"></i></a>
+                            <a href="#" class="text-white"><i class="fab fa-twitter fa-2x"></i></a>
+                            <a href="#" class="text-white"><i class="fab fa-instagram fa-2x"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center pt-4 border-top border-secondary">
+                    <p class="mb-0">&copy; 2024 SnapBid. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            // Image preview functionality
+            document.getElementById('images').addEventListener('change', function(e) {
+                const preview = document.getElementById('imagePreview');
+                preview.innerHTML = '';
+                
+                for (let i = 0; i < this.files.length; i++) {
+                    const file = this.files[i];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-4 mb-3';
+                        
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'img-fluid rounded';
+                        img.style.maxHeight = '200px';
+                        
+                        col.appendChild(img);
+                        preview.appendChild(col);
+                    }
+                    
+                    reader.readAsDataURL(file);
+                }
+            });
+        </script>
+    </body>
+</html> 

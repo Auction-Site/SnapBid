@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/default}">
+<head>
+    <title layout:title-pattern="$CONTENT_TITLE" th:text="${auction.title}">Auction Title - SnapBid</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card shadow mb-4">
+                        <div class="card-body">
+                            <h1 class="card-title" th:text="${auction.title}">Auction Title</h1>
+                            <p class="text-muted" th:text="${auction.description}">Auction description...</p>
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h5>Current Price</h5>
+                                    <p class="h3 text-primary" th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Time Remaining</h5>
+                                    <p class="h3" th:text="${auction.endDate}">End date</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h5>Seller Information</h5>
+                                <p th:text="${auction.seller.username}">Seller username</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <h3 class="card-title">Bidding History</h3>
+                            <div th:if="${#lists.isEmpty(auction.bids)}" class="text-center py-3">
+                                <p class="text-muted">No bids yet</p>
+                            </div>
+                            <div th:if="${!#lists.isEmpty(auction.bids)}" class="list-group">
+                                <div th:each="bid : ${auction.bids}" class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong th:text="${bid.bidder.username}">Bidder</strong>
+                                            <span class="text-muted" th:text="${#temporals.format(bid.createdAt, 'MMM dd, yyyy HH:mm')}">Bid time</span>
+                                        </div>
+                                        <span class="text-primary" th:text="${#numbers.formatDecimal(bid.amount, 1, 2)}">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card shadow" sec:authorize="isAuthenticated()">
+                        <div class="card-body">
+                            <h3 class="card-title">Place a Bid</h3>
+                            
+                            <div th:if="${error}" class="alert alert-danger" role="alert">
+                                <span th:text="${error}"></span>
+                            </div>
+                            
+                            <form th:action="@{/auctions/{id}/bid(id=${auction.id})}" method="post" th:object="${bid}">
+                                <div class="mb-3">
+                                    <label for="amount" class="form-label">Your Bid</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="amount" 
+                                               th:field="*{amount}" step="0.01" min="0.01"
+                                               th:classappend="${#fields.hasErrors('amount')} ? 'is-invalid'">
+                                    </div>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('amount')}"
+                                         th:errors="*{amount}"></div>
+                                    <div class="form-text">
+                                        Minimum bid: <span th:text="${#numbers.formatDecimal(auction.currentPrice + 0.01, 1, 2)}">$0.00</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">Place Bid</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow mt-4">
+                        <div class="card-body">
+                            <h3 class="card-title">Auction Details</h3>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <strong>Starting Price:</strong>
+                                    <span th:text="${#numbers.formatDecimal(auction.startingPrice, 1, 2)}">$0.00</span>
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Start Date:</strong>
+                                    <span th:text="${#temporals.format(auction.startDate, 'MMM dd, yyyy HH:mm')}">Start date</span>
+                                </li>
+                                <li class="mb-2">
+                                    <strong>End Date:</strong>
+                                    <span th:text="${#temporals.format(auction.endDate, 'MMM dd, yyyy HH:mm')}">End date</span>
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Status:</strong>
+                                    <span th:text="${auction.status}">Status</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

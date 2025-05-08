@@ -6,9 +6,36 @@
     </head>
     <body>
         <div th:fragment="footer">
-            <footer class="footer">
+            <footer class="footer bg-dark text-light py-4">
                 <div class="container">
-                    <p>This is a sample footer</p>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h5>About SnapBid</h5>
+                            <p>Your trusted platform for online auctions. Buy and sell items with confidence.</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>Quick Links</h5>
+                            <ul class="list-unstyled">
+                                <li><a href="../footers/about.html" class="text-light">About Us</a></li>
+                                <li><a href="../footers/contact.html" class="text-light">Contact</a></li>
+                                <li><a href="../footers/terms.html" class="text-light">Terms & Conditions</a></li>
+                                <li><a href="/privacy" class="text-light">Privacy Policy</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>Connect With Us</h5>
+                            <div class="social-links">
+                                <a href="#" class="text-light me-2"><i class="fab fa-facebook"></i></a>
+                                <a href="#" class="text-light me-2"><i class="fab fa-twitter"></i></a>
+                                <a href="#" class="text-light me-2"><i class="fab fa-instagram"></i></a>
+                                <a href="#" class="text-light"><i class="fab fa-linkedin"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <div class="text-center">
+                        <p class="mb-0">&copy; 2025 SnapBid. All rights reserved.</p>
+                    </div>
                 </div>
             </footer>
         </div>

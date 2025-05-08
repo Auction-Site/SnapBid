@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/default}">
+<head>
+    <title layout:title-pattern="$CONTENT_TITLE">Auctions - SnapBid</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Active Auctions</h1>
+                <a th:href="@{/auctions/create}" class="btn btn-primary" sec:authorize="isAuthenticated()">
+                    <i class="fas fa-plus"></i> Create Auction
+                </a>
+            </div>
+
+            <div class="row">
+                <div th:each="auction : ${auctions}" class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title" th:text="${auction.title}">Auction Title</h5>
+                            <p class="card-text" th:text="${auction.description}">Auction description...</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Current Price:</strong>
+                                    <span th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</span>
+                                </div>
+                                <div>
+                                    <strong>Ends:</strong>
+                                    <span th:text="${#temporals.format(auction.endDate, 'MMM dd, yyyy HH:mm')}">End date</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <a th:href="@{/auctions/{id}(id=${auction.id})}" class="btn btn-outline-primary btn-sm">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(auctions)}" class="text-center py-5">
+                <h3>No active auctions found</h3>
+                <p class="text-muted">Check back later for new auctions</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

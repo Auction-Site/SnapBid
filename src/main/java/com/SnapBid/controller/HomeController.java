@@ -24,10 +24,7 @@ public class HomeController {
 
     @PostMapping("/login")
     public String processLogin(@ModelAttribute User user, Model model) {
-        if (
-            "admin".equals(user.getUsername()) &&
-            "password".equals(user.getPassword())
-        ) {
+        if ("admin".equals(user.getUsername()) &&"password".equals(user.getPassword())) {
             return "redirect:/";
         } else {
             model.addAttribute("error", "Invalid username or password");

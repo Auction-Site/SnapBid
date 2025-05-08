@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/default}">
+<head>
+    <title layout:title-pattern="$CONTENT_TITLE">Create Auction - SnapBid</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <h2 class="card-title text-center mb-4">Create New Auction</h2>
+                            
+                            <div th:if="${error}" class="alert alert-danger" role="alert">
+                                <span th:text="${error}"></span>
+                            </div>
+                            
+                            <form th:action="@{/auctions/create}" method="post" th:object="${auction}">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="title" th:field="*{title}"
+                                           th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}"
+                                         th:errors="*{title}"></div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" th:field="*{description}"
+                                              rows="4" th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"></textarea>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}"
+                                         th:errors="*{description}"></div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="startingPrice" class="form-label">Starting Price</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="startingPrice" 
+                                                   th:field="*{startingPrice}" step="0.01" min="0.01"
+                                                   th:classappend="${#fields.hasErrors('startingPrice')} ? 'is-invalid'">
+                                        </div>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('startingPrice')}"
+                                             th:errors="*{startingPrice}"></div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label for="endDate" class="form-label">End Date</label>
+                                        <input type="datetime-local" class="form-control" id="endDate" 
+                                               th:field="*{endDate}"
+                                               th:classappend="${#fields.hasErrors('endDate')} ? 'is-invalid'">
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('endDate')}"
+                                             th:errors="*{endDate}"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">Create Auction</button>
+                                    <a th:href="@{/auctions}" class="btn btn-outline-secondary">Cancel</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
