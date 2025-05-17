@@ -7,7 +7,6 @@
     <style>
         .auction-preview {
             transition: all 0.3s ease;
-            border: 1px solid #e0e0e0;
         }
         .form-floating label {
             opacity: 0.7;
@@ -17,120 +16,264 @@
             color: red;
             margin-left: 3px;
         }
+        .image-drop-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 60px 20px;
+            text-align: center;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .image-drop-area:hover,
+        .image-drop-area.active {
+            border-color: #0d6efd;
+            background-color: #e9ecef;
+        }
+        .image-drop-area i {
+            font-size: 48px;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        #imagePreview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .preview-image-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .preview-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #dc3545;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .auction-card {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .auction-card-img {
+            height: 180px;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .auction-card-img i {
+            font-size: 64px;
+            color: #adb5bd;
+        }
     </style>
 </head>
 <body>
     <div layout:fragment="content">
         <div class="container py-4">
-            <div class="row justify-content-center">
+            <h1 class="text-center mb-4">Create New Auction</h1>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Create a compelling auction listing with detailed information to attract more bidders.
+            </div>
+            
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <div class="row">
                 <div class="col-md-8">
-                    <div class="card shadow">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-edit me-2"></i>Auction Details
+                            </h5>
+                        </div>
                         <div class="card-body">
-                            <h2 class="card-title text-center mb-4">Create New Auction</h2>
-                            
-                            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-                                <span th:text="${successMessage}"></span>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                            
-                            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <span th:text="${error}"></span>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                            
                             <form id="auctionForm" th:action="@{/auctions/create}" method="post" th:object="${auction}" class="needs-validation">
-                                <div class="mb-3 form-floating">
-                                    <input type="text" class="form-control" id="title" th:field="*{title}"
-                                           th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" 
-                                           placeholder="Enter a title">
-                                    <label for="title" class="required">Title</label>
-                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}"
-                                         th:errors="*{title}"></div>
-                                    <div class="form-text">Choose a descriptive title for your auction</div>
-                                </div>
-                                
-                                <div class="mb-3 form-floating">
-                                    <textarea class="form-control" id="description" th:field="*{description}"
-                                              rows="4" th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"
-                                              style="height: 120px;" placeholder="Enter description"></textarea>
-                                    <label for="description" class="required">Description</label>
-                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}"
-                                         th:errors="*{description}"></div>
-                                    <div class="form-text">Provide detailed information about your item</div>
-                                </div>
-                                
-                                <div class="mb-3 form-floating">
-                                    <select class="form-select" id="category" th:field="*{category}" 
-                                            th:classappend="${#fields.hasErrors('category')} ? 'is-invalid'">
-                                        <option value="">Select a category</option>
-                                        <option th:each="cat : ${categories}" 
-                                                th:value="${cat.id}" 
-                                                th:text="${cat.name}"></option>
-                                    </select>
-                                    <label for="category" class="required">Category</label>
-                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}">
-                                        Please select a category
-                                    </div>
-                                </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-6 mb-3 form-floating">
-                                        <input type="number" class="form-control" id="startingPrice" 
-                                               th:field="*{startingPrice}" step="0.01" min="0.01"
-                                               th:classappend="${#fields.hasErrors('startingPrice')} ? 'is-invalid'"
-                                               placeholder="Enter starting price">
-                                        <label for="startingPrice" class="required">Starting Price ($)</label>
-                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('startingPrice')}"
-                                             th:errors="*{startingPrice}"></div>
+                                <div class="mb-4">
+                                    <h6 class="fw-bold mb-3">Basic Information</h6>
+                                    
+                                    <div class="mb-3 form-floating">
+                                        <input type="text" class="form-control" id="title" th:field="*{title}"
+                                               th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" 
+                                               placeholder="Enter a title">
+                                        <label for="title" class="required">Title</label>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}"
+                                             th:errors="*{title}"></div>
+                                        <div class="form-text">Choose a descriptive title that will catch buyers' attention</div>
                                     </div>
                                     
-                                    <div class="col-md-6 mb-3 form-floating">
-                                        <input type="datetime-local" class="form-control" id="endDate" 
-                                               th:field="*{endDate}"
-                                               th:classappend="${#fields.hasErrors('endDate')} ? 'is-invalid'"
-                                               placeholder="Select end date">
-                                        <label for="endDate" class="required">End Date</label>
-                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('endDate')}"
-                                             th:errors="*{endDate}"></div>
-                                        <div class="form-text">When should the auction end?</div>
+                                    <div class="mb-3">
+                                        <label for="category" class="required fw-medium">Category</label>
+                                        <select class="form-select" id="category" th:field="*{category}" 
+                                                th:classappend="${#fields.hasErrors('category')} ? 'is-invalid'">
+                                            <option value="">-- Select a category --</option>
+                                            <option th:each="cat : ${categories}" 
+                                                    th:value="${cat.id}" 
+                                                    th:text="${cat.name}"></option>
+                                        </select>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}">
+                                            Please select a category
+                                        </div>
+                                        <div class="form-text">Choose the most appropriate category for your item</div>
                                     </div>
-                                </div>
-                                
-                                <div class="card mb-4 auction-preview">
-                                    <div class="card-header bg-light">
-                                        <h5 class="mb-0">Auction Preview</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <h4 id="preview-title">Your auction title</h4>
-                                        <p id="preview-description" class="text-muted">Your auction description will appear here</p>
-                                        <div class="d-flex justify-content-between">
-                                            <div>
-                                                <small class="text-muted">Starting Price</small>
-                                                <p id="preview-price" class="mb-0">$0.00</p>
-                                            </div>
-                                            <div>
-                                                <small class="text-muted">Category</small>
-                                                <p id="preview-category" class="mb-0">Uncategorized</p>
-                                            </div>
-                                            <div>
-                                                <small class="text-muted">End Date</small>
-                                                <p id="preview-end-date" class="mb-0">Not set</p>
-                                            </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="description" class="required fw-medium">Description</label>
+                                        <textarea class="form-control" id="description" th:field="*{description}"
+                                                  rows="6" th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"
+                                                  placeholder="Enter a detailed description"></textarea>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}"
+                                             th:errors="*{description}"></div>
+                                        <div class="form-text">
+                                            Provide detailed information about your item including condition, brand, size, color, 
+                                            and any other relevant details. HTML formatting is not allowed.
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div class="d-grid gap-2">
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" name="showInList" id="showInList">
-                                        <label class="form-check-label" for="showInList">
-                                            Show in auction list after creation
-                                        </label>
+                                <div class="mb-4">
+                                    <h6 class="fw-bold mb-3">Pricing & Duration</h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="startingPrice" class="required fw-medium">Starting Price ($)</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="startingPrice" 
+                                                       th:field="*{startingPrice}" step="0.01" min="0.01"
+                                                       th:classappend="${#fields.hasErrors('startingPrice')} ? 'is-invalid'"
+                                                       placeholder="Enter starting price">
+                                            </div>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('startingPrice')}"
+                                                 th:errors="*{startingPrice}"></div>
+                                            <div class="form-text">Set a reasonable starting price to attract initial bids</div>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="endDate" class="required fw-medium">Auction End Date</label>
+                                            <input type="datetime-local" class="form-control" id="endDate" 
+                                                   th:field="*{endDate}"
+                                                   th:classappend="${#fields.hasErrors('endDate')} ? 'is-invalid'"
+                                                   placeholder="Select end date">
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('endDate')}"
+                                                 th:errors="*{endDate}"></div>
+                                            <div class="form-text">Longer auctions may receive more bids</div>
+                                        </div>
                                     </div>
-                                    <button type="submit" class="btn btn-primary btn-lg">Create Auction</button>
-                                    <a th:href="@{/auctions}" class="btn btn-outline-secondary">Cancel</a>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h6 class="fw-bold mb-3">Images (Coming Soon)</h6>
+                                    <div class="image-drop-area" id="dropArea">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <p class="mb-2">Drag & drop your images here or click to browse</p>
+                                        <p class="text-muted small mb-0">Supports: JPG, PNG, GIF (Max 5 images, 5MB each)</p>
+                                        <input type="file" id="imageUpload" multiple accept="image/*" style="display: none;">
+                                    </div>
+                                    <div id="imagePreview"></div>
+                                    <div class="form-text mt-2">High-quality images can increase your chances of selling</div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" name="showInList" id="showInList" checked>
+                                    <label class="form-check-label" for="showInList">
+                                        Show in auction list after creation
+                                    </label>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-gavel me-2"></i>Create Auction
+                                    </button>
+                                    <a th:href="@{/auctions}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="sticky-md-top" style="top: 20px; z-index: 1;">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-eye me-2"></i>Auction Preview
+                                </h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="auction-card">
+                                    <div class="auction-card-img">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                    <div class="p-3">
+                                        <h5 id="preview-title" class="mb-2">Your auction title</h5>
+                                        <div class="mb-3">
+                                            <span id="preview-category" class="badge bg-secondary">Category</span>
+                                        </div>
+                                        <p id="preview-description" class="text-muted small mb-3">Your auction description will appear here...</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <small class="text-muted d-block">Starting Price</small>
+                                                <span id="preview-price" class="fw-bold">$0.00</span>
+                                            </div>
+                                            <div class="text-end">
+                                                <small class="text-muted d-block">Ends On</small>
+                                                <span id="preview-end-date" class="small">Not set</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-lightbulb me-2"></i>Tips
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="mb-0 ps-3">
+                                    <li class="mb-2"><strong>Title:</strong> Be specific and include key details (brand, model, size)</li>
+                                    <li class="mb-2"><strong>Description:</strong> Mention condition, history, and any flaws</li>
+                                    <li class="mb-2"><strong>Price:</strong> Start lower to attract more bidders</li>
+                                    <li class="mb-2"><strong>Duration:</strong> 5-7 days is typically optimal</li>
+                                    <li><strong>Images:</strong> Use clear, well-lit photos from multiple angles</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -154,11 +297,13 @@
             const previewEndDate = document.getElementById('preview-end-date');
             
             function updatePreview() {
-                // Update title
-                previewTitle.textContent = titleInput.value || 'Your auction title';
+                // Update title (max 40 chars for preview)
+                const titleText = titleInput.value || 'Your auction title';
+                previewTitle.textContent = titleText.length > 40 ? titleText.substring(0, 40) + '...' : titleText;
                 
-                // Update description
-                previewDescription.textContent = descriptionInput.value || 'Your auction description will appear here';
+                // Update description (max 120 chars for preview)
+                const descText = descriptionInput.value || 'Your auction description will appear here...';
+                previewDescription.textContent = descText.length > 120 ? descText.substring(0, 120) + '...' : descText;
                 
                 // Update price
                 const price = parseFloat(priceInput.value);
@@ -166,11 +311,17 @@
                 
                 // Update category
                 const selectedOption = categorySelect.options[categorySelect.selectedIndex];
-                previewCategory.textContent = selectedOption.text !== 'Select a category' ? selectedOption.text : 'Uncategorized';
+                const categoryText = selectedOption && selectedOption.text !== '-- Select a category --' ? selectedOption.text : 'Category';
+                previewCategory.textContent = categoryText;
                 
                 // Update end date
                 const endDate = endDateInput.value ? new Date(endDateInput.value) : null;
-                previewEndDate.textContent = endDate ? endDate.toLocaleString() : 'Not set';
+                if (endDate) {
+                    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                    previewEndDate.textContent = endDate.toLocaleDateString('en-US', options);
+                } else {
+                    previewEndDate.textContent = 'Not set';
+                }
             }
             
             // Add event listeners
@@ -182,6 +333,111 @@
             
             // Initial preview update
             updatePreview();
+            
+            // Image upload functionality (placeholder for future implementation)
+            const dropArea = document.getElementById('dropArea');
+            const imageUpload = document.getElementById('imageUpload');
+            const imagePreview = document.getElementById('imagePreview');
+            
+            dropArea.addEventListener('click', function() {
+                imageUpload.click();
+            });
+            
+            // Drag & Drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('active');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('active');
+            }
+            
+            // Handle file uploads (frontend only for now)
+            dropArea.addEventListener('drop', handleDrop, false);
+            imageUpload.addEventListener('change', handleFiles, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles({ target: { files: files } });
+            }
+            
+            function handleFiles(e) {
+                const files = e.target.files;
+                // For demonstration purposes - no actual upload happens
+                if (files.length > 5) {
+                    alert('You can upload a maximum of 5 images');
+                    return;
+                }
+                
+                imagePreview.innerHTML = '';
+                
+                for (let i = 0; i < files.length && i < 5; i++) {
+                    const file = files[i];
+                    if (!file.type.match('image.*')) {
+                        continue;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const container = document.createElement('div');
+                        container.className = 'preview-image-container';
+                        
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'preview-image';
+                        
+                        const removeBtn = document.createElement('div');
+                        removeBtn.className = 'remove-image';
+                        removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                        removeBtn.onclick = function() {
+                            container.remove();
+                        };
+                        
+                        container.appendChild(img);
+                        container.appendChild(removeBtn);
+                        imagePreview.appendChild(container);
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+                
+                // Show alert about image feature not being implemented yet
+                if (files.length > 0) {
+                    const alertHTML = `
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> Image upload is just a preview. The actual functionality will be implemented soon.
+                        </div>
+                    `;
+                    imagePreview.insertAdjacentHTML('afterend', alertHTML);
+                    
+                    // Remove alert after 5 seconds
+                    setTimeout(() => {
+                        const alert = imagePreview.nextElementSibling;
+                        if (alert && alert.classList.contains('alert')) {
+                            alert.remove();
+                        }
+                    }, 5000);
+                }
+            }
         });
     </script>
 </body>
