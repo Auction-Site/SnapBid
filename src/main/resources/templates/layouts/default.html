@@ -1,23 +1,26 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title} ?: 'SnapBid'">SnapBid</title>
+    <title layout:title-pattern="$CONTENT_TITLE - SnapBid">SnapBid</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link th:href="@{/css/style.css}" rel="stylesheet">
+    <th:block layout:fragment="styles"></th:block>
 </head>
 <body>
     <div th:replace="~{fragments/header :: header}"></div>
     
     <main class="container my-4">
-        <div th:replace="${content}"></div>
+        <div layout:fragment="content"></div>
     </main>
     
     <div th:replace="~{fragments/footer :: footer}"></div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/main.js}"></script>
+    <th:block layout:fragment="javascript"></th:block>
 </body>
 </html> 

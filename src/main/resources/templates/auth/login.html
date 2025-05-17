@@ -15,7 +15,7 @@
                             <h2 class="card-title text-center mb-4">Login to SnapBid</h2>
                             
                             <div th:if="${param.error}" class="alert alert-danger" role="alert">
-                                Invalid username or password.
+                                Invalid username or password. Please try again.
                             </div>
                             
                             <div th:if="${param.logout}" class="alert alert-success" role="alert">
@@ -25,16 +25,37 @@
                             <div th:if="${param.registered}" class="alert alert-success" role="alert">
                                 Registration successful! Please login with your credentials.
                             </div>
+
+                            <div th:if="${param.expired}" class="alert alert-warning" role="alert">
+                                Your session has expired. Please login again.
+                            </div>
+                            
+                            <div th:if="${param.denied}" class="alert alert-danger" role="alert">
+                                Access denied. You don't have permission to access that resource.
+                            </div>
+                            
+                            <div th:if="${errorMsg}" class="alert alert-danger" role="alert" th:text="${errorMsg}"></div>
+                            <div th:if="${logoutMsg}" class="alert alert-success" role="alert" th:text="${logoutMsg}"></div>
+                            <div th:if="${registeredMsg}" class="alert alert-success" role="alert" th:text="${registeredMsg}"></div>
+                            <div th:if="${expiredMsg}" class="alert alert-warning" role="alert" th:text="${expiredMsg}"></div>
+                            <div th:if="${deniedMsg}" class="alert alert-danger" role="alert" th:text="${deniedMsg}"></div>
                             
                             <form th:action="@{/login}" method="post">
                                 <div class="mb-3">
                                     <label for="username" class="form-label">Username</label>
-                                    <input type="text" class="form-control" id="username" name="username" required>
+                                    <input type="text" class="form-control" id="username" name="username" required 
+                                           autofocus placeholder="Enter your username">
                                 </div>
                                 
                                 <div class="mb-3">
                                     <label for="password" class="form-label">Password</label>
-                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <input type="password" class="form-control" id="password" name="password" required
+                                           placeholder="Enter your password">
+                                </div>
+
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="remember-me" name="remember-me">
+                                    <label class="form-check-label" for="remember-me">Remember me</label>
                                 </div>
                                 
                                 <div class="d-grid gap-2">

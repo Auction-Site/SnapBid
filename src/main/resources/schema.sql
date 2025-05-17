@@ -36,14 +36,16 @@ CREATE TABLE auctions (
     starting_price DECIMAL(19,2) NOT NULL,
     current_price DECIMAL(19,2) NOT NULL,
     reserve_price DECIMAL(19,2),
-    start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP NOT NULL,
-    status VARCHAR(20) NOT NULL,
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     seller_id BIGINT NOT NULL,
+    winner_id BIGINT,
     category_id BIGINT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (seller_id) REFERENCES users(id),
+    FOREIGN KEY (winner_id) REFERENCES users(id),
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
@@ -70,4 +72,19 @@ CREATE TABLE watchlist (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (auction_id) REFERENCES auctions(id),
     UNIQUE KEY unique_watchlist (user_id, auction_id)
-); 
+);
+
+-- Insert default categories
+INSERT INTO categories (name, description) VALUES 
+('Electronics', 'Electronic devices and gadgets'),
+('Clothing', 'Clothes, shoes, and accessories'),
+('Home & Garden', 'Items for home and garden'),
+('Sports', 'Sports equipment and accessories'),
+('Collectibles', 'Rare items and collectibles'),
+('Vehicles', 'Cars, motorcycles, and other vehicles'),
+('Toys & Games', 'Toys, games, and entertainment items'),
+('Art', 'Paintings, sculptures, and art pieces');
+
+-- Insert demo user (password: password123)
+INSERT INTO users (username, email, password, first_name, last_name) VALUES 
+('demouser', 'demo@example.com', '$2a$10$3QGm2v7LRznxWwCYQMfH3.QiObqRbRQ6rIKXn5WHVjOHCxwZTrS5.', 'Demo', 'User'); 

@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AuctionService {
@@ -174,5 +175,16 @@ public class AuctionService {
             auction.setStatus(AuctionStatus.ENDED);
             auctionRepository.save(auction);
         }
+    }
+
+    /**
+     * Find auctions that have been won by a specific user
+     * @param user The user who has won auctions
+     * @return List of auctions won by the user
+     */
+    @Transactional(readOnly = true)
+    public List<Auction> getUserWonAuctions(User user) {
+        // Get all ended auctions where the winner is the specified user
+        return auctionRepository.findByStatusAndWinner(AuctionStatus.ENDED, user);
     }
 } 

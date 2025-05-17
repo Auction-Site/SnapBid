@@ -4,10 +4,55 @@
       layout:decorate="~{layouts/default}">
 <head>
     <title layout:title-pattern="$CONTENT_TITLE" th:text="${auction.title}">Auction Title - SnapBid</title>
+    <!-- Add WebSocket library scripts -->
+    <script src="/js/websocket-libs.js"></script>
+    <script src="/js/websocket.js"></script>
+    <script src="/js/auction-success.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Make username available to WebSocket client
+        var currentUsername = /*[[${#authentication.name}]]*/ 'anonymous';
+        /*]]>*/
+    </script>
+    <style>
+        #bid-notifications {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        .bid-notification {
+            background-color: #ffffff;
+            border-left: 4px solid #4caf50;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 4px;
+            animation: slideIn 0.3s ease-out;
+        }
+        .bid-notification.fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        #bid-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
 </head>
 <body>
     <div layout:fragment="content">
         <div class="container">
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
             <div class="row">
                 <div class="col-md-8">
                     <div class="card shadow mb-4">
@@ -18,7 +63,7 @@
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <h5>Current Price</h5>
-                                    <p class="h3 text-primary" th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</p>
+                                    <p class="h3 text-primary" id="current-price" th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</p>
                                 </div>
                                 <div class="col-md-6">
                                     <h5>Time Remaining</h5>
@@ -36,17 +81,19 @@
                     <div class="card shadow">
                         <div class="card-body">
                             <h3 class="card-title">Bidding History</h3>
-                            <div th:if="${#lists.isEmpty(auction.bids)}" class="text-center py-3">
-                                <p class="text-muted">No bids yet</p>
-                            </div>
-                            <div th:if="${!#lists.isEmpty(auction.bids)}" class="list-group">
-                                <div th:each="bid : ${auction.bids}" class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong th:text="${bid.bidder.username}">Bidder</strong>
-                                            <span class="text-muted" th:text="${#temporals.format(bid.createdAt, 'MMM dd, yyyy HH:mm')}">Bid time</span>
+                            <div id="bid-history">
+                                <div th:if="${#lists.isEmpty(auction.bids)}" class="text-center py-3" id="no-bids-message">
+                                    <p class="text-muted">No bids yet</p>
+                                </div>
+                                <div th:if="${!#lists.isEmpty(auction.bids)}" class="list-group">
+                                    <div th:each="bid : ${auction.bids}" class="list-group-item bid-row">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong class="bidder" th:text="${bid.bidder.username}">Bidder</strong>
+                                                <span class="text-muted time" th:text="${#temporals.format(bid.createdAt, 'MMM dd, yyyy HH:mm')}">Bid time</span>
+                                            </div>
+                                            <span class="text-primary amount" th:text="${#numbers.formatDecimal(bid.amount, 1, 2)}">$0.00</span>
                                         </div>
-                                        <span class="text-primary" th:text="${#numbers.formatDecimal(bid.amount, 1, 2)}">$0.00</span>
                                     </div>
                                 </div>
                             </div>
@@ -63,7 +110,27 @@
                                 <span th:text="${error}"></span>
                             </div>
                             
-                            <form th:action="@{/auctions/{id}/bid(id=${auction.id})}" method="post" th:object="${bid}">
+                            <!-- Update form to use WebSocket -->
+                            <form id="bid-form" th:attr="data-auction-id=${auction.id}" onsubmit="return false;">
+                                <div class="mb-3">
+                                    <label for="bid-amount" class="form-label">Your Bid</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="bid-amount" 
+                                               name="amount" step="0.01" min="0.01">
+                                    </div>
+                                    <div class="form-text">
+                                        Minimum bid: <span th:text="${#numbers.formatDecimal(auction.currentPrice + 0.01, 1, 2)}">$0.00</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">Place Bid</button>
+                                </div>
+                            </form>
+                            
+                            <!-- Keep the original form for fallback -->
+                            <form th:action="@{/auctions/{id}/bid(id=${auction.id})}" method="post" th:object="${bid}" style="display: none;">
                                 <div class="mb-3">
                                     <label for="amount" class="form-label">Your Bid</label>
                                     <div class="input-group">
@@ -112,6 +179,9 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Container for bid notifications -->
+        <div id="bid-notifications"></div>
     </div>
 </body>
 </html> 

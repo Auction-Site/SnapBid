@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface AuctionRepository extends JpaRepository<Auction, Long> {
@@ -23,6 +22,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     List<Auction> findByEndDateBeforeAndStatus(LocalDateTime endDate, AuctionStatus status);
     List<Auction> findBySeller_Id(Long sellerId);
     List<Auction> findByBids_Bidder_Id(Long userId);
+    List<Auction> findByStatusAndWinner(AuctionStatus status, User winner);
     
     @Query("SELECT a FROM Auction a WHERE LOWER(a.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(a.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Auction> searchByKeyword(@Param("keyword") String keyword);

@@ -3,21 +3,38 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/default}">
 <head>
-    <title layout:title-pattern="$CONTENT_TITLE">Auctions - SnapBid</title>
+    <title layout:title-pattern="$CONTENT_TITLE">My Auctions - SnapBid</title>
     <style>
-        .auction-card {
-            transition: all 0.3s ease;
+        .status-active {
+            color: #28a745;
         }
-        .auction-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        .status-ended {
+            color: #dc3545;
         }
-        .highlight-new {
-            animation: highlight-pulse 2s ease-in-out;
+        .status-cancelled {
+            color: #6c757d;
         }
-        @keyframes highlight-pulse {
-            0%, 100% { box-shadow: 0 0 0 rgba(40, 167, 69, 0); }
-            50% { box-shadow: 0 0 20px rgba(40, 167, 69, 0.5); }
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge-active {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+        .badge-ended {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+        .badge-cancelled {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+            border: 1px solid #6c757d;
         }
     </style>
 </head>
@@ -30,15 +47,21 @@
             </div>
             
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>Active Auctions</h1>
-                <a th:href="@{/auctions/create}" class="btn btn-primary" sec:authorize="isAuthenticated()">
-                    <i class="fas fa-plus"></i> Create Auction
+                <h1>My Auctions</h1>
+                <a th:href="@{/auctions/create}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create New Auction
                 </a>
             </div>
 
             <div class="row">
                 <div th:each="auction : ${auctions}" class="col-md-4 mb-4">
-                    <div class="card h-100 auction-card" th:classappend="${auction.id == newAuctionId ? 'border-success highlight-new' : ''}">
+                    <div class="card h-100 auction-card">
+                        <div class="card-header bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted" th:text="${#temporals.format(auction.createdAt, 'MMM dd, yyyy')}">Creation date</small>
+                                <span th:class="'status-badge badge-' + ${#strings.toLowerCase(auction.status)}" th:text="${auction.status}">Status</span>
+                            </div>
+                        </div>
                         <div class="card-body">
                             <h5 class="card-title" th:text="${auction.title}">Auction Title</h5>
                             <p class="card-text text-muted" th:text="${#strings.abbreviate(auction.description,100)}">Auction description...</p>
@@ -48,14 +71,17 @@
                                     <span class="text-primary" th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</span>
                                 </div>
                                 <div>
-                                    <strong>Ends:</strong>
+                                    <strong>End Date:</strong>
                                     <span th:text="${#temporals.format(auction.endDate, 'MMM dd, yyyy HH:mm')}">End date</span>
                                 </div>
                             </div>
                         </div>
                         <div class="card-footer bg-transparent">
                             <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted" th:text="${#temporals.format(auction.createdAt, 'MMM dd, yyyy')}">Creation date</small>
+                                <span th:if="${auction.bids != null && !auction.bids.isEmpty()}" class="badge bg-info">
+                                    <i class="fas fa-gavel"></i> <span th:text="${auction.bids.size()}">0</span> Bids
+                                </span>
+                                <span th:if="${auction.bids == null || auction.bids.isEmpty()}" class="badge bg-secondary">No Bids</span>
                                 <a th:href="@{/auctions/{id}(id=${auction.id})}" class="btn btn-outline-primary btn-sm">
                                     View Details
                                 </a>
@@ -66,9 +92,9 @@
             </div>
 
             <div th:if="${#lists.isEmpty(auctions)}" class="text-center py-5">
-                <h3>No active auctions found</h3>
-                <p class="text-muted">Check back later for new auctions</p>
-                <a th:href="@{/auctions/create}" class="btn btn-primary mt-3" sec:authorize="isAuthenticated()">
+                <h3>You haven't created any auctions yet</h3>
+                <p class="text-muted">Create your first auction to start selling</p>
+                <a th:href="@{/auctions/create}" class="btn btn-primary mt-3">
                     Create Your First Auction
                 </a>
             </div>

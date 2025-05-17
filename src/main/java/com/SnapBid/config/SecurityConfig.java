@@ -7,29 +7,61 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        logger.info("Configuring security filter chain");
+        
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/home", "/about", "/contact", "/register", "/login", "/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/auctions", "/auctions/**").permitAll()
-                .requestMatchers("/profile", "/create", "/bids/**").authenticated()
-                .anyRequest().authenticated()
+                .requestMatchers("/", "/home", "/about", "/contact", "/register", "/login", "/css/**", "/js/**", "/images/**", "/error", "/webjars/**").permitAll()
+                .requestMatchers("/auctions", "/auctions/*/").permitAll()
+                .requestMatchers("/profile", "/profile/**", "/create", "/bids/**", "/api/bids/**", "/auctions/create", "/auctions/my-auctions", "/auctions/my-bids").authenticated()
+                .anyRequest().permitAll()
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/")
+                .loginProcessingUrl("/login")
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .defaultSuccessUrl("/", true)
+                .failureUrl("/login?error=true")
                 .permitAll()
             )
             .logout(logout -> logout
-                .logoutSuccessUrl("/")
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                .logoutSuccessUrl("/?logout=true")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID", "remember-me")
                 .permitAll()
+            )
+            .rememberMe(remember -> remember
+                .key("snapbid-remember-me-key")
+                .tokenValiditySeconds(86400) // 1 day
+                .rememberMeParameter("remember-me")
+            )
+            .sessionManagement(session -> session
+                .invalidSessionUrl("/login?expired=true")
+                .maximumSessions(1)
+                .expiredUrl("/login?expired=true")
+            )
+            .exceptionHandling(exceptions -> exceptions
+                .accessDeniedPage("/login?denied=true")
             );
+
+        // Add CSRF protection but exclude the API endpoints
+        http.csrf(csrf -> csrf
+            .ignoringRequestMatchers("/api/**")
+        );
 
         return http.build();
     }

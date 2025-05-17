@@ -1,56 +1,70 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/default}">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Profile - SnapBid</title>
+        <title layout:title-pattern="$CONTENT_TITLE">Profile - SnapBid</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <link rel="stylesheet" href="/css/style.css">
+        <style>
+            .status-active {
+                color: #28a745;
+            }
+            .status-ended {
+                color: #dc3545;
+            }
+            .status-cancelled {
+                color: #6c757d;
+            }
+            .status-badge {
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
+                font-size: 0.75rem;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            .badge-active {
+                background-color: rgba(40, 167, 69, 0.1);
+                color: #28a745;
+                border: 1px solid #28a745;
+            }
+            .badge-ended {
+                background-color: rgba(220, 53, 69, 0.1);
+                color: #dc3545;
+                border: 1px solid #dc3545;
+            }
+            .badge-cancelled {
+                background-color: rgba(108, 117, 125, 0.1);
+                color: #6c757d;
+                border: 1px solid #6c757d;
+            }
+        </style>
     </head>
     <body>
-        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+        <div layout:fragment="content">
             <div class="container">
-                <a class="navbar-brand fw-bold text-primary" href="/">SnapBid</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <form class="d-flex mx-auto" style="width: 40%;">
-                        <input class="form-control me-2" type="search" placeholder="Search auctions...">
-                        <button class="btn btn-outline-primary" type="submit"><i class="fas fa-search"></i></button>
-                    </form>
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/"><i class="fas fa-home"></i> Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/auctions"><i class="fas fa-gavel"></i> Auctions</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/create"><i class="fas fa-plus-circle"></i> Create</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="/profile"><i class="fas fa-user"></i> Profile</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="btn btn-outline-primary ms-2" href="/login">Login</a>
-                        </li>
-                    </ul>
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-            </div>
-        </nav>
-
-        <main class="py-4">
-            <div class="container">
+                
                 <div class="row">
                     <!-- Profile Sidebar -->
                     <div class="col-md-3">
                         <div class="card shadow-sm mb-4">
                             <div class="card-body text-center">
-                                <img src="https://via.placeholder.com/150" class="rounded-circle mb-3" alt="Profile Picture">
-                                <h5 class="card-title">John Doe</h5>
-                                <p class="text-muted">Member since Jan 2024</p>
+                                <div class="bg-light rounded-circle d-inline-flex justify-content-center align-items-center mb-3" 
+                                     style="width: 100px; height: 100px;">
+                                    <span class="display-4 text-primary">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                </div>
+                                <h5 class="card-title" th:text="${user.username}">Username</h5>
+                                <p class="text-muted">Member since <span th:text="${#temporals.format(user.createdAt, 'MMM yyyy')}">Jan 2024</span></p>
                                 <div class="d-grid">
                                     <a href="/settings" class="btn btn-outline-primary">Edit Profile</a>
                                 </div>
@@ -62,16 +76,20 @@
                                 <h6 class="card-title">Statistics</h6>
                                 <ul class="list-unstyled">
                                     <li class="mb-2">
-                                        <i class="fas fa-gavel text-primary"></i> 15 Auctions Won
+                                        <i class="fas fa-gavel text-primary"></i> 
+                                        <span th:text="${wonAuctions.size()}">0</span> Auctions Won
                                     </li>
                                     <li class="mb-2">
-                                        <i class="fas fa-tag text-primary"></i> 10 Items Sold
+                                        <i class="fas fa-tag text-primary"></i> 
+                                        <span th:text="${userAuctions.size()}">0</span> Items Listed
                                     </li>
                                     <li class="mb-2">
-                                        <i class="fas fa-star text-primary"></i> 4.8/5 Rating
+                                        <i class="fas fa-hand-paper text-primary"></i> 
+                                        <span th:text="${biddedAuctions.size()}">0</span> Active Bids
                                     </li>
                                     <li>
-                                        <i class="fas fa-comment text-primary"></i> 25 Reviews
+                                        <i class="fas fa-envelope text-primary"></i> 
+                                        <span th:text="${user.email}">user@example.com</span>
                                     </li>
                                 </ul>
                             </div>
@@ -84,7 +102,7 @@
                         <ul class="nav nav-tabs mb-4" id="profileTabs" role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button">
-                                    Active Auctions
+                                    My Auctions
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
@@ -97,11 +115,6 @@
                                     Won Auctions
                                 </button>
                             </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button">
-                                    History
-                                </button>
-                            </li>
                         </ul>
 
                         <!-- Tab Content -->
@@ -109,165 +122,157 @@
                             <!-- Active Auctions -->
                             <div class="tab-pane fade show active" id="active">
                                 <div class="row row-cols-1 row-cols-md-2 g-4">
-                                    <!-- Active Auction Card -->
-                                    <div class="col">
+                                    <!-- User's Auctions -->
+                                    <div th:each="auction : ${userAuctions}" class="col">
                                         <div class="card h-100 shadow-sm">
-                                            <div class="position-relative">
-                                                <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Auction Item">
-                                                <div class="position-absolute top-0 end-0 m-2 bg-dark text-white rounded-pill px-3 py-1">
-                                                    2d 5h left
+                                            <div class="card-header bg-transparent">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <small class="text-muted" th:text="${#temporals.format(auction.createdAt, 'MMM dd, yyyy')}">Creation date</small>
+                                                    <span th:class="'status-badge badge-' + ${#strings.toLowerCase(auction.status)}" th:text="${auction.status}">Status</span>
                                                 </div>
                                             </div>
                                             <div class="card-body">
-                                                <h5 class="card-title">Vintage Camera Collection</h5>
-                                                <p class="card-text text-primary fw-bold">Current Bid: $450</p>
-                                                <div class="d-flex justify-content-between text-muted small mb-3">
-                                                    <span><i class="fas fa-eye"></i> 1.2k views</span>
-                                                    <span><i class="fas fa-gavel"></i> 24 bids</span>
+                                                <h5 class="card-title" th:text="${auction.title}">Auction Title</h5>
+                                                <p class="card-text text-muted" th:text="${#strings.abbreviate(auction.description,100)}">Auction description...</p>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>Current Price:</strong>
+                                                        <span class="text-primary" th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</span>
+                                                    </div>
+                                                    <div>
+                                                        <strong>End Date:</strong>
+                                                        <span th:text="${#temporals.format(auction.endDate, 'MMM dd, yyyy HH:mm')}">End date</span>
+                                                    </div>
                                                 </div>
-                                                <div class="d-grid gap-2">
-                                                    <a href="#" class="btn btn-primary">View Details</a>
-                                                    <a href="#" class="btn btn-outline-danger">End Auction</a>
+                                            </div>
+                                            <div class="card-footer bg-transparent">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span th:if="${auction.bids != null && !auction.bids.isEmpty()}" class="badge bg-info">
+                                                        <i class="fas fa-gavel"></i> <span th:text="${auction.bids.size()}">0</span> Bids
+                                                    </span>
+                                                    <span th:if="${auction.bids == null || auction.bids.isEmpty()}" class="badge bg-secondary">No Bids</span>
+                                                    <a th:href="@{/auctions/{id}(id=${auction.id})}" class="btn btn-outline-primary btn-sm">
+                                                        View Details
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <div th:if="${#lists.isEmpty(userAuctions)}" class="text-center py-5">
+                                    <h3>You haven't created any auctions yet</h3>
+                                    <p class="text-muted">Create your first auction to start selling</p>
+                                    <a th:href="@{/auctions/create}" class="btn btn-primary mt-3">
+                                        Create Your First Auction
+                                    </a>
+                                </div>
                             </div>
 
                             <!-- My Bids -->
                             <div class="tab-pane fade" id="bids">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>Item</th>
-                                                <th>Your Bid</th>
-                                                <th>Current Bid</th>
-                                                <th>Status</th>
-                                                <th>Time Left</th>
-                                                <th>Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>Antique Watch</td>
-                                                <td>$300</td>
-                                                <td>$320</td>
-                                                <td><span class="badge bg-warning">Outbid</span></td>
-                                                <td>1d 3h</td>
-                                                <td><a href="#" class="btn btn-sm btn-primary">Bid Again</a></td>
-                                            </tr>
-                                            <tr>
-                                                <td>Vintage Camera</td>
-                                                <td>$450</td>
-                                                <td>$450</td>
-                                                <td><span class="badge bg-success">Winning</span></td>
-                                                <td>2d 5h</td>
-                                                <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                <div class="row row-cols-1 row-cols-md-2 g-4">
+                                    <!-- User's Bid Auctions -->
+                                    <div th:each="auction : ${biddedAuctions}" class="col">
+                                        <div class="card h-100 shadow-sm">
+                                            <div class="card-header bg-transparent">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <small class="text-muted" th:text="${auction.seller.username}">Seller</small>
+                                                    <span th:if="${auction.status.name() == 'ACTIVE' && auction.highestBid != null && auction.highestBid.bidder.id == user.id}" 
+                                                        class="badge bg-success">Winning</span>
+                                                    <span th:if="${auction.status.name() == 'ACTIVE' && (auction.highestBid == null || auction.highestBid.bidder.id != user.id)}" 
+                                                        class="badge bg-warning">Outbid</span>
+                                                    <span th:if="${auction.status.name() != 'ACTIVE'}" 
+                                                        class="badge bg-secondary">Ended</span>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <h5 class="card-title" th:text="${auction.title}">Auction Title</h5>
+                                                <p class="card-text text-muted" th:text="${#strings.abbreviate(auction.description,100)}">Auction description...</p>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>Current Price:</strong>
+                                                        <span class="text-primary" th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</span>
+                                                    </div>
+                                                    <div>
+                                                        <strong>End Date:</strong>
+                                                        <span th:text="${#temporals.format(auction.endDate, 'MMM dd, yyyy HH:mm')}">End date</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-transparent">
+                                                <a th:href="@{/auctions/{id}(id=${auction.id})}" class="btn btn-outline-primary d-block">
+                                                    View Details
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div th:if="${#lists.isEmpty(biddedAuctions)}" class="text-center py-5">
+                                    <h3>You haven't placed any bids yet</h3>
+                                    <p class="text-muted">Browse auctions and start bidding</p>
+                                    <a th:href="@{/auctions}" class="btn btn-primary mt-3">
+                                        Browse Auctions
+                                    </a>
                                 </div>
                             </div>
 
                             <!-- Won Auctions -->
                             <div class="tab-pane fade" id="won">
                                 <div class="row row-cols-1 row-cols-md-2 g-4">
-                                    <!-- Won Auction Card -->
-                                    <div class="col">
+                                    <!-- Won Auction Cards -->
+                                    <div th:each="auction : ${wonAuctions}" class="col">
                                         <div class="card h-100 shadow-sm">
                                             <div class="position-relative">
-                                                <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Won Item">
                                                 <div class="position-absolute top-0 end-0 m-2 bg-success text-white rounded-pill px-3 py-1">
                                                     Won
                                                 </div>
                                             </div>
                                             <div class="card-body">
-                                                <h5 class="card-title">Antique Clock</h5>
-                                                <p class="card-text text-success fw-bold">Won for: $250</p>
+                                                <h5 class="card-title" th:text="${auction.title}">Auction Title</h5>
+                                                <p class="card-text text-success fw-bold">Won for: 
+                                                    <span th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</span>
+                                                </p>
                                                 <div class="d-flex justify-content-between text-muted small mb-3">
-                                                    <span>Won on: Jan 15, 2024</span>
-                                                    <span>Seller: Jane Smith</span>
+                                                    <span>Won on: <span th:text="${#temporals.format(auction.updatedAt, 'MMM dd, yyyy')}">Date</span></span>
+                                                    <span>Seller: <span th:text="${auction.seller.username}">Seller</span></span>
                                                 </div>
                                                 <div class="d-grid">
-                                                    <a href="#" class="btn btn-primary">View Details</a>
+                                                    <a th:href="@{/auctions/{id}(id=${auction.id})}" class="btn btn-primary">View Details</a>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- History -->
-                            <div class="tab-pane fade" id="history">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Item</th>
-                                                <th>Type</th>
-                                                <th>Price</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>Jan 15, 2024</td>
-                                                <td>Antique Clock</td>
-                                                <td>Won Auction</td>
-                                                <td>$250</td>
-                                                <td><span class="badge bg-success">Completed</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td>Jan 10, 2024</td>
-                                                <td>Vintage Camera</td>
-                                                <td>Sold</td>
-                                                <td>$450</td>
-                                                <td><span class="badge bg-success">Completed</span></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                
+                                <div th:if="${#lists.isEmpty(wonAuctions)}" class="text-center py-5">
+                                    <h3>You haven't won any auctions yet</h3>
+                                    <p class="text-muted">Keep bidding to win auctions</p>
+                                    <a th:href="@{/auctions}" class="btn btn-primary mt-3">
+                                        Browse Auctions
+                                    </a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
-
-        <!-- Footer -->
-        <footer class="bg-dark text-white py-5 mt-5">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-                        <h3>About SnapBid</h3>
-                        <p>Your trusted platform for online auctions. Buy and sell unique items with confidence.</p>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <h3>Quick Links</h3>
-                        <ul class="list-unstyled">
-                            <li><a href="/about" class="text-white-50 text-decoration-none">About Us</a></li>
-                            <li><a href="/contact" class="text-white-50 text-decoration-none">Contact</a></li>
-                            <li><a href="/terms" class="text-white-50 text-decoration-none">Terms & Conditions</a></li>
-                            <li><a href="/privacy" class="text-white-50 text-decoration-none">Privacy Policy</a></li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <h3>Connect With Us</h3>
-                        <div class="d-flex gap-3">
-                            <a href="#" class="text-white"><i class="fab fa-facebook fa-2x"></i></a>
-                            <a href="#" class="text-white"><i class="fab fa-twitter fa-2x"></i></a>
-                            <a href="#" class="text-white"><i class="fab fa-instagram fa-2x"></i></a>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-center pt-4 border-top border-secondary">
-                    <p class="mb-0">&copy; 2024 SnapBid. All rights reserved.</p>
-                </div>
-            </div>
-        </footer>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        </div>
+        
+        <script layout:fragment="javascript">
+            // Auto-dismiss success alert after 5 seconds
+            document.addEventListener('DOMContentLoaded', function() {
+                const successAlert = document.querySelector('.alert-success');
+                if (successAlert) {
+                    setTimeout(function() {
+                        const closeBtn = successAlert.querySelector('.btn-close');
+                        if (closeBtn) {
+                            closeBtn.click();
+                        }
+                    }, 5000);
+                }
+            });
+        </script>
     </body>
 </html> 

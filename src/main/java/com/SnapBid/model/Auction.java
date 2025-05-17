@@ -166,6 +166,20 @@ public class Auction {
         this.bids = bids;
     }
 
+    /**
+     * Gets the highest bid for this auction
+     * @return The highest bid, or null if no bids exist
+     */
+    public Bid getHighestBid() {
+        if (bids == null || bids.isEmpty()) {
+            return null;
+        }
+        
+        return bids.stream()
+            .max((b1, b2) -> b1.getAmount().compareTo(b2.getAmount()))
+            .orElse(null);
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
