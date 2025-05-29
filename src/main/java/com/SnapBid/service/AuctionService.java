@@ -6,6 +6,7 @@ import com.SnapBid.model.Bid;
 import com.SnapBid.model.User;
 import com.SnapBid.repository.AuctionRepository;
 import com.SnapBid.repository.BidRepository;
+import com.SnapBid.websocket.WebSocketController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,8 @@ public class AuctionService {
     @Autowired
     private AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
+    @Autowired
+    private WebSocketController webSocketController;
 
     public AuctionService(BidRepository bidRepository) {
         this.bidRepository = bidRepository;
@@ -94,7 +97,12 @@ public class AuctionService {
     public Auction createAuction(Auction auction, User seller) {
         auction.setSeller(seller);
         auction.setCurrentPrice(auction.getStartingPrice());
-        return auctionRepository.save(auction);
+        Auction savedAuction = auctionRepository.save(auction);
+        
+        // Notify all connected clients about the new auction
+        webSocketController.notifyNewAuction(savedAuction);
+        
+        return savedAuction;
     }
 
     @Transactional

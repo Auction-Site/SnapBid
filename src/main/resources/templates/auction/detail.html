@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layouts/default}">
 <head>
     <title layout:title-pattern="$CONTENT_TITLE" th:text="${auction.title}">Auction Title - SnapBid</title>
@@ -15,33 +16,102 @@
         /*]]>*/
     </script>
     <style>
-        #bid-notifications {
+        .auction-header {
+            background-color: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .auction-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        .auction-details {
+            background-color: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .bid-history {
+            background-color: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .bid-form {
+            background-color: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .time-remaining {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        .current-price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        .bid-history-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        .bid-history-item:last-child {
+            border-bottom: none;
+        }
+        .bidder-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .seller-info {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .seller-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .bid-notification {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 1000;
-            max-width: 300px;
-        }
-        .bid-notification {
-            background-color: #ffffff;
-            border-left: 4px solid #4caf50;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            padding: 15px;
-            margin-top: 10px;
+            background-color: white;
+            border-left: 4px solid var(--secondary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem;
             border-radius: 4px;
+            z-index: 1000;
             animation: slideIn 0.3s ease-out;
-        }
-        .bid-notification.fade-out {
-            opacity: 0;
-            transition: opacity 0.5s ease-out;
         }
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
-        }
-        #bid-history {
-            max-height: 300px;
-            overflow-y: auto;
         }
     </style>
 </head>
@@ -49,68 +119,146 @@
     <div layout:fragment="content">
         <div class="container">
             <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
                 <span th:text="${successMessage}"></span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
             
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="card shadow mb-4">
-                        <div class="card-body">
-                            <h1 class="card-title" th:text="${auction.title}">Auction Title</h1>
-                            <p class="text-muted" th:text="${auction.description}">Auction description...</p>
-                            
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <h5>Current Price</h5>
-                                    <p class="h3 text-primary" id="current-price" th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <h5>Time Remaining</h5>
-                                    <p class="h3" th:text="${auction.endDate}">End date</p>
-                                </div>
+            <!-- Auction Header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h1 class="mb-3" th:text="${auction.title}">Auction Title</h1>
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge bg-primary me-2" th:text="${auction.category.name}">Category</span>
+                                <small class="text-muted">Listed by <span th:text="${auction.seller.username}">Seller</span></small>
                             </div>
-                            
-                            <div class="mb-4">
-                                <h5>Seller Information</h5>
-                                <p th:text="${auction.seller.username}">Seller username</p>
+                            <p class="text-muted" th:text="${auction.description}">Auction description...</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="time-remaining mb-2">
+                                <i class="fas fa-clock me-2"></i>
+                                <span th:text="${auction.endDate}">Time remaining</span>
+                            </div>
+                            <div class="current-price">
+                                <span th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</span>
+                            </div>
+                            <div class="text-muted">
+                                <span th:if="${auction.bids != null && !auction.bids.isEmpty()}" 
+                                      th:text="${auction.bids.size() + ' bids'}">0 bids</span>
+                                <span th:if="${auction.bids == null || auction.bids.isEmpty()}">No bids yet</span>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="card shadow">
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-md-8">
+                    <!-- Auction Details -->
+                    <div class="card mb-4">
                         <div class="card-body">
-                            <h3 class="card-title">Bidding History</h3>
-                            <div id="bid-history">
-                                <div th:if="${#lists.isEmpty(auction.bids)}" class="text-center py-3" id="no-bids-message">
-                                    <p class="text-muted">No bids yet</p>
+                            <h3 class="mb-4">Auction Details</h3>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <strong>Starting Price:</strong>
+                                    <span th:text="${#numbers.formatDecimal(auction.startingPrice, 1, 2)}">$0.00</span>
                                 </div>
-                                <div th:if="${!#lists.isEmpty(auction.bids)}" class="list-group">
-                                    <div th:each="bid : ${auction.bids}" class="list-group-item bid-row">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <strong class="bidder" th:text="${bid.bidder.username}">Bidder</strong>
-                                                <span class="text-muted time" th:text="${#temporals.format(bid.createdAt, 'MMM dd, yyyy HH:mm')}">Bid time</span>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Current Price:</strong>
+                                    <span class="text-primary" th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Start Date:</strong>
+                                    <span th:text="${#temporals.format(auction.startDate, 'MMM dd, yyyy HH:mm')}">Start date</span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>End Date:</strong>
+                                    <span th:text="${#temporals.format(auction.endDate, 'MMM dd, yyyy HH:mm')}">End date</span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Status:</strong>
+                                    <span class="badge" th:classappend="${auction.status == 'ACTIVE' ? 'bg-success' : 'bg-secondary'}"
+                                          th:text="${auction.status}">Status</span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Total Bids:</strong>
+                                    <span th:text="${auction.bids != null ? auction.bids.size() : 0}">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bid History -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="mb-4">Bid History</h3>
+                            <div th:if="${#lists.isEmpty(auction.bids)}" class="text-center py-3">
+                                <p class="text-muted">No bids yet</p>
+                            </div>
+                            <div th:if="${!#lists.isEmpty(auction.bids)}" class="list-group">
+                                <div th:each="bid : ${auction.bids}" class="bid-history-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="user-avatar me-3">
+                                                <span th:text="${#strings.substring(bid.bidder.username,0,1)}">B</span>
                                             </div>
-                                            <span class="text-primary amount" th:text="${#numbers.formatDecimal(bid.amount, 1, 2)}">$0.00</span>
+                                            <div>
+                                                <strong th:text="${bid.bidder.username}">Bidder</strong>
+                                                <div class="text-muted small" th:text="${#temporals.format(bid.createdAt, 'MMM dd, yyyy HH:mm')}">Bid time</div>
+                                            </div>
                                         </div>
+                                        <span class="text-primary fw-bold" th:text="${#numbers.formatDecimal(bid.amount, 1, 2)}">$0.00</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- Sidebar -->
                 <div class="col-md-4">
-                    <div class="card shadow" sec:authorize="isAuthenticated()">
+                    <!-- Seller Info -->
+                    <div class="card mb-4">
                         <div class="card-body">
-                            <h3 class="card-title">Place a Bid</h3>
+                            <div class="text-center">
+                                <div class="user-avatar mx-auto" style="width: 80px; height: 80px; font-size: 2rem;">
+                                    <span th:text="${#strings.substring(auction.seller.username,0,1)}">S</span>
+                                </div>
+                                <h5 class="mt-3" th:text="${auction.seller.username}">Seller</h5>
+                                <p class="text-muted">Member since <span th:text="${#temporals.format(auction.seller.createdAt, 'MMM yyyy')}">Jan 2024</span></p>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Sales:</span>
+                                <strong th:text="${sellerStats.totalSales}">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Active Listings:</span>
+                                <strong th:text="${sellerStats.activeListings}">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Rating:</span>
+                                <div>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <span th:text="${sellerStats.rating}">0.0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bid Form -->
+                    <div class="card" sec:authorize="isAuthenticated()">
+                        <div class="card-body">
+                            <h3 class="mb-4">Place a Bid</h3>
                             
                             <div th:if="${error}" class="alert alert-danger" role="alert">
+                                <i class="fas fa-exclamation-circle me-2"></i>
                                 <span th:text="${error}"></span>
                             </div>
                             
-                            <!-- Update form to use WebSocket -->
                             <form id="bid-form" th:attr="data-auction-id=${auction.id}" onsubmit="return false;">
                                 <div class="mb-3">
                                     <label for="bid-amount" class="form-label">Your Bid</label>
@@ -125,55 +273,23 @@
                                 </div>
                                 
                                 <div class="d-grid">
-                                    <button type="submit" class="btn btn-primary">Place Bid</button>
-                                </div>
-                            </form>
-                            
-                            <!-- Keep the original form for fallback -->
-                            <form th:action="@{/auctions/{id}/bid(id=${auction.id})}" method="post" th:object="${bid}" style="display: none;">
-                                <div class="mb-3">
-                                    <label for="amount" class="form-label">Your Bid</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">$</span>
-                                        <input type="number" class="form-control" id="amount" 
-                                               th:field="*{amount}" step="0.01" min="0.01"
-                                               th:classappend="${#fields.hasErrors('amount')} ? 'is-invalid'">
-                                    </div>
-                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('amount')}"
-                                         th:errors="*{amount}"></div>
-                                    <div class="form-text">
-                                        Minimum bid: <span th:text="${#numbers.formatDecimal(auction.currentPrice + 0.01, 1, 2)}">$0.00</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-grid">
-                                    <button type="submit" class="btn btn-primary">Place Bid</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-gavel me-2"></i>Place Bid
+                                    </button>
                                 </div>
                             </form>
                         </div>
                     </div>
-                    
-                    <div class="card shadow mt-4">
+
+                    <!-- Login Prompt -->
+                    <div class="card" sec:authorize="!isAuthenticated()">
                         <div class="card-body">
-                            <h3 class="card-title">Auction Details</h3>
-                            <ul class="list-unstyled">
-                                <li class="mb-2">
-                                    <strong>Starting Price:</strong>
-                                    <span th:text="${#numbers.formatDecimal(auction.startingPrice, 1, 2)}">$0.00</span>
-                                </li>
-                                <li class="mb-2">
-                                    <strong>Start Date:</strong>
-                                    <span th:text="${#temporals.format(auction.startDate, 'MMM dd, yyyy HH:mm')}">Start date</span>
-                                </li>
-                                <li class="mb-2">
-                                    <strong>End Date:</strong>
-                                    <span th:text="${#temporals.format(auction.endDate, 'MMM dd, yyyy HH:mm')}">End date</span>
-                                </li>
-                                <li class="mb-2">
-                                    <strong>Status:</strong>
-                                    <span th:text="${auction.status}">Status</span>
-                                </li>
-                            </ul>
+                            <h3 class="mb-4">Place a Bid</h3>
+                            <p class="text-muted">Please log in to place a bid</p>
+                            <div class="d-grid gap-2">
+                                <a href="/login" class="btn btn-primary">Login</a>
+                                <a href="/register" class="btn btn-outline-primary">Register</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -183,5 +299,92 @@
         <!-- Container for bid notifications -->
         <div id="bid-notifications"></div>
     </div>
+    
+    <script layout:fragment="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // WebSocket connection
+            const socket = new SockJS('/ws');
+            const stompClient = Stomp.over(socket);
+            
+            stompClient.connect({}, function(frame) {
+                console.log('Connected to WebSocket');
+                
+                // Subscribe to auction updates
+                stompClient.subscribe('/topic/auctions/' + auctionId, function(message) {
+                    const bid = JSON.parse(message.body);
+                    updateBidHistory(bid);
+                    showBidNotification(bid);
+                });
+            });
+
+            // Handle bid form submission
+            const bidForm = document.getElementById('bid-form');
+            if (bidForm) {
+                bidForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const amount = document.getElementById('bid-amount').value;
+                    const auctionId = bidForm.dataset.auctionId;
+                    
+                    stompClient.send("/app/auctions/" + auctionId + "/bid", {}, JSON.stringify({
+                        'amount': amount
+                    }));
+                });
+            }
+
+            function updateBidHistory(bid) {
+                const bidHistory = document.querySelector('.bid-history .list-group');
+                const noBidsMessage = document.querySelector('.bid-history .text-center');
+                
+                if (noBidsMessage) {
+                    noBidsMessage.remove();
+                }
+                
+                const bidItem = document.createElement('div');
+                bidItem.className = 'bid-history-item';
+                bidItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar me-3">
+                                <span>${bid.bidder.charAt(0)}</span>
+                            </div>
+                            <div>
+                                <strong>${bid.bidder}</strong>
+                                <div class="text-muted small">${new Date().toLocaleString()}</div>
+                            </div>
+                        </div>
+                        <span class="text-primary fw-bold">$${bid.amount}</span>
+                    </div>
+                `;
+                
+                bidHistory.insertBefore(bidItem, bidHistory.firstChild);
+                
+                // Update current price
+                document.querySelector('.current-price').textContent = '$' + bid.amount;
+            }
+
+            function showBidNotification(bid) {
+                const notifications = document.getElementById('bid-notifications');
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div class="user-avatar me-3">
+                            <span>${bid.bidder.charAt(0)}</span>
+                        </div>
+                        <div>
+                            <strong>${bid.bidder}</strong> placed a bid of <strong>$${bid.amount}</strong>
+                        </div>
+                    </div>
+                `;
+                
+                notifications.appendChild(notification);
+                
+                // Remove notification after 5 seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+        });
+    </script>
 </body>
 </html> 

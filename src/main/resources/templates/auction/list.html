@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/default}">
 <head>
-    <title layout:title-pattern="$CONTENT_TITLE">Auctions - SnapBid</title>
+    <title layout:title-pattern="$CONTENT_TITLE">Active Auctions - SnapBid</title>
     <style>
         .auction-card {
             transition: all 0.3s ease;
@@ -16,8 +16,40 @@
             animation: highlight-pulse 2s ease-in-out;
         }
         @keyframes highlight-pulse {
-            0%, 100% { box-shadow: 0 0 0 rgba(40, 167, 69, 0); }
-            50% { box-shadow: 0 0 20px rgba(40, 167, 69, 0.5); }
+            0%, 100% { box-shadow: 0 0 0 rgba(231, 76, 60, 0); }
+            50% { box-shadow: 0 0 20px rgba(231, 76, 60, 0.5); }
+        }
+        .auction-filters {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .auction-stats {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 1rem;
+        }
+        .stat-card i {
+            font-size: 2rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+        .stat-card .number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -25,21 +57,107 @@
     <div layout:fragment="content">
         <div class="container">
             <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
                 <span th:text="${successMessage}"></span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
             
+            <!-- Header Section -->
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>Active Auctions</h1>
+                <div>
+                    <h1 class="mb-1">Active Auctions</h1>
+                    <p class="text-muted mb-0">Discover unique items up for auction</p>
+                </div>
                 <a th:href="@{/auctions/create}" class="btn btn-primary" sec:authorize="isAuthenticated()">
-                    <i class="fas fa-plus"></i> Create Auction
+                    <i class="fas fa-plus me-2"></i>Create Auction
                 </a>
             </div>
 
+            <!-- Stats Section -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-gavel"></i>
+                        <div class="number" th:text="${#lists.size(auctions)}">0</div>
+                        <div class="label">Active Auctions</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <div class="number" th:text="${totalBidders}">0</div>
+                        <div class="label">Active Bidders</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-dollar-sign"></i>
+                        <div class="number" th:text="${totalBids}">0</div>
+                        <div class="label">Total Bids</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-clock"></i>
+                        <div class="number" th:text="${endingSoon}">0</div>
+                        <div class="label">Ending Soon</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="filter-section mb-4">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select">
+                            <option value="">All Categories</option>
+                            <option th:each="category : ${categories}"
+                                    th:value="${category.id}"
+                                    th:text="${category.name}">Category</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Price Range</label>
+                        <select class="form-select">
+                            <option value="">Any Price</option>
+                            <option value="0-100">$0 - $100</option>
+                            <option value="100-500">$100 - $500</option>
+                            <option value="500-1000">$500 - $1000</option>
+                            <option value="1000+">$1000+</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-select">
+                            <option value="newest">Newest First</option>
+                            <option value="ending">Ending Soon</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Time Remaining</label>
+                        <select class="form-select">
+                            <option value="">Any Time</option>
+                            <option value="1">Less than 1 hour</option>
+                            <option value="24">Less than 24 hours</option>
+                            <option value="72">Less than 3 days</option>
+                            <option value="168">Less than 1 week</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auctions Grid -->
             <div class="row">
                 <div th:each="auction : ${auctions}" class="col-md-4 mb-4">
-                    <div class="card h-100 auction-card" th:classappend="${auction.id == newAuctionId ? 'border-success highlight-new' : ''}">
+                    <div class="card auction-card" th:classappend="${auction.id == newAuctionId ? 'highlight-new' : ''}">
                         <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-primary" th:text="${auction.category.name}">Category</span>
+                                <small class="text-muted" th:text="${#temporals.format(auction.createdAt, 'MMM dd, yyyy')}">Created</small>
+                            </div>
                             <h5 class="card-title" th:text="${auction.title}">Auction Title</h5>
                             <p class="card-text text-muted" th:text="${#strings.abbreviate(auction.description,100)}">Auction description...</p>
                             <div class="d-flex justify-content-between align-items-center">
@@ -55,7 +173,10 @@
                         </div>
                         <div class="card-footer bg-transparent">
                             <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted" th:text="${#temporals.format(auction.createdAt, 'MMM dd, yyyy')}">Creation date</small>
+                                <span th:if="${auction.bids != null && !auction.bids.isEmpty()}" class="badge bg-info">
+                                    <i class="fas fa-gavel"></i> <span th:text="${auction.bids.size()}">0</span> Bids
+                                </span>
+                                <span th:if="${auction.bids == null || auction.bids.isEmpty()}" class="badge bg-secondary">No Bids</span>
                                 <a th:href="@{/auctions/{id}(id=${auction.id})}" class="btn btn-outline-primary btn-sm">
                                     View Details
                                 </a>
@@ -65,7 +186,9 @@
                 </div>
             </div>
 
+            <!-- Empty State -->
             <div th:if="${#lists.isEmpty(auctions)}" class="text-center py-5">
+                <i class="fas fa-gavel fa-3x text-muted mb-3"></i>
                 <h3>No active auctions found</h3>
                 <p class="text-muted">Check back later for new auctions</p>
                 <a th:href="@{/auctions/create}" class="btn btn-primary mt-3" sec:authorize="isAuthenticated()">
@@ -76,8 +199,8 @@
     </div>
     
     <script layout:fragment="javascript">
-        // Auto-dismiss success alert after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss success alert after 5 seconds
             const successAlert = document.querySelector('.alert-success');
             if (successAlert) {
                 setTimeout(function() {
@@ -86,6 +209,72 @@
                         closeBtn.click();
                     }
                 }, 5000);
+            }
+
+            // WebSocket connection
+            const socket = new SockJS('/ws');
+            const stompClient = Stomp.over(socket);
+            
+            stompClient.connect({}, function(frame) {
+                console.log('Connected to WebSocket');
+                
+                // Subscribe to new auctions
+                stompClient.subscribe('/topic/auctions/new', function(message) {
+                    const auction = JSON.parse(message.body);
+                    addNewAuction(auction);
+                });
+            });
+
+            function addNewAuction(auction) {
+                const auctionRow = document.querySelector('.row');
+                const auctionCard = createAuctionCard(auction);
+                
+                // Add the new auction card at the beginning
+                auctionRow.insertBefore(auctionCard, auctionRow.firstChild);
+                
+                // Add highlight animation
+                auctionCard.classList.add('highlight-new');
+                setTimeout(() => {
+                    auctionCard.classList.remove('highlight-new');
+                }, 2000);
+            }
+
+            function createAuctionCard(auction) {
+                const col = document.createElement('div');
+                col.className = 'col-md-4 mb-4';
+                
+                col.innerHTML = `
+                    <div class="card auction-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-primary">${auction.category || 'Uncategorized'}</span>
+                                <small class="text-muted">${new Date(auction.createdAt).toLocaleDateString()}</small>
+                            </div>
+                            <h5 class="card-title">${auction.title}</h5>
+                            <p class="card-text text-muted">${auction.description.substring(0, 100)}${auction.description.length > 100 ? '...' : ''}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Current Price:</strong>
+                                    <span class="text-primary">$${auction.currentPrice}</span>
+                                </div>
+                                <div>
+                                    <strong>Ends:</strong>
+                                    <span>${new Date(auction.endDate).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-secondary">No Bids</span>
+                                <a href="/auctions/${auction.id}" class="btn btn-outline-primary btn-sm">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                return col;
             }
         });
     </script>
