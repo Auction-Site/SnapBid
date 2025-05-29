@@ -71,33 +71,31 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer mt-auto py-4 bg-light">
         <div class="container">
             <div class="row">
-                <div class="col-md-4 mb-4">
+                <div class="col-md-4">
                     <h5>About SnapBid</h5>
-                    <p>Your trusted platform for online auctions. Buy and sell unique items with confidence.</p>
+                    <p class="text-muted">Your trusted platform for online auctions. Buy and sell with confidence.</p>
                 </div>
-                <div class="col-md-4 mb-4">
+                <div class="col-md-4">
                     <h5>Quick Links</h5>
                     <ul class="list-unstyled">
-                        <li><a href="/about">About Us</a></li>
-                        <li><a href="/contact">Contact</a></li>
-                        <li><a href="/terms">Terms & Conditions</a></li>
-                        <li><a href="/privacy">Privacy Policy</a></li>
+                        <li><a th:href="@{/}" class="text-decoration-none">Home</a></li>
+                        <li><a th:href="@{/auctions}" class="text-decoration-none">Browse Auctions</a></li>
+                        <li><a th:href="@{/auctions/create}" class="text-decoration-none" sec:authorize="isAuthenticated()">Create Auction</a></li>
+                        <li><a th:href="@{/profile}" class="text-decoration-none" sec:authorize="isAuthenticated()">My Profile</a></li>
                     </ul>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <h5>Connect With Us</h5>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin"></i></a>
-                    </div>
+                <div class="col-md-4">
+                    <h5>Contact Us</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="mailto:support@snapbid.com" class="text-decoration-none">support@snapbid.com</a></li>
+                        <li><a href="tel:+1234567890" class="text-decoration-none">+1 (234) 567-890</a></li>
+                    </ul>
                 </div>
             </div>
-            <hr class="mt-4 mb-4" style="border-color: rgba(255,255,255,0.1);">
+            <hr>
             <div class="text-center">
                 <p class="mb-0">&copy; 2024 SnapBid. All rights reserved.</p>
             </div>

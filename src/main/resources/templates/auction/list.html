@@ -78,7 +78,7 @@
                 <div class="col-md-3">
                     <div class="stat-card">
                         <i class="fas fa-gavel"></i>
-                        <div class="number" th:text="${#lists.size(auctions)}">0</div>
+                        <div class="number" id="activeAuctionsCount" th:text="${#lists.size(auctions)}">0</div>
                         <div class="label">Active Auctions</div>
                     </div>
                 </div>
@@ -150,7 +150,7 @@
             </div>
 
             <!-- Auctions Grid -->
-            <div class="row">
+            <div class="row" id="auctionsRow">
                 <div th:each="auction : ${auctions}" class="col-md-4 mb-4">
                     <div class="card auction-card" th:classappend="${auction.id == newAuctionId ? 'highlight-new' : ''}">
                         <div class="card-body">
@@ -187,7 +187,7 @@
             </div>
 
             <!-- Empty State -->
-            <div th:if="${#lists.isEmpty(auctions)}" class="text-center py-5">
+            <div th:if="${#lists.isEmpty(auctions)}" id="emptyState" class="text-center py-5">
                 <i class="fas fa-gavel fa-3x text-muted mb-3"></i>
                 <h3>No active auctions found</h3>
                 <p class="text-muted">Check back later for new auctions</p>
@@ -220,13 +220,22 @@
                 
                 // Subscribe to new auctions
                 stompClient.subscribe('/topic/auctions/new', function(message) {
+                    console.log('Received new auction notification:', message);
                     const auction = JSON.parse(message.body);
                     addNewAuction(auction);
                 });
+            }, function(error) {
+                console.error('WebSocket connection error:', error);
             });
 
             function addNewAuction(auction) {
+                console.log('Adding new auction to UI:', auction);
                 const auctionRow = document.querySelector('.row');
+                if (!auctionRow) {
+                    console.error('Could not find auction row element');
+                    return;
+                }
+
                 const auctionCard = createAuctionCard(auction);
                 
                 // Add the new auction card at the beginning
@@ -237,18 +246,41 @@
                 setTimeout(() => {
                     auctionCard.classList.remove('highlight-new');
                 }, 2000);
+
+                // Update stats
+                updateStats();
+
+                // Remove empty state if it exists
+                const emptyState = document.querySelector('.text-center.py-5');
+                if (emptyState) {
+                    emptyState.remove();
+                }
             }
 
             function createAuctionCard(auction) {
                 const col = document.createElement('div');
                 col.className = 'col-md-4 mb-4';
                 
+                const formattedDate = new Date(auction.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+
+                const formattedEndDate = new Date(auction.endDate).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
                 col.innerHTML = `
                     <div class="card auction-card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <span class="badge bg-primary">${auction.category || 'Uncategorized'}</span>
-                                <small class="text-muted">${new Date(auction.createdAt).toLocaleDateString()}</small>
+                                <span class="badge bg-primary">${auction.category}</span>
+                                <small class="text-muted">${formattedDate}</small>
                             </div>
                             <h5 class="card-title">${auction.title}</h5>
                             <p class="card-text text-muted">${auction.description.substring(0, 100)}${auction.description.length > 100 ? '...' : ''}</p>
@@ -259,24 +291,20 @@
                                 </div>
                                 <div>
                                     <strong>Ends:</strong>
-                                    <span>${new Date(auction.endDate).toLocaleString()}</span>
+                                    <span>${formattedEndDate}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="card-footer bg-transparent">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="badge bg-secondary">No Bids</span>
-                                <a href="/auctions/${auction.id}" class="btn btn-outline-primary btn-sm">
+                                <span th:if="${auction.bids != null && !auction.bids.isEmpty()}" class="badge bg-info">
+                                    <i class="fas fa-gavel"></i> <span th:text="${auction.bids.size()}">0</span> Bids
+                                </span>
+                                <span th:if="${auction.bids == null || auction.bids.isEmpty()}" class="badge bg-secondary">No Bids</span>
+                                <a th:href="@{/auctions/{id}(id=${auction.id})}" class="btn btn-outline-primary btn-sm">
                                     View Details
                                 </a>
                             </div>
                         </div>
                     </div>
-                `;
-                
-                return col;
-            }
-        });
-    </script>
-</body>
-</html> 
+                `

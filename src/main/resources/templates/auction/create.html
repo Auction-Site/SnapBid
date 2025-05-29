@@ -117,14 +117,15 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <form id="auctionForm" th:action="@{/auctions/create}" method="post" th:object="${auction}" class="needs-validation">
+                            <form id="auctionForm" th:action="@{/auctions/create}" method="post" th:object="${auction}" class="needs-validation" novalidate>
                                 <div class="mb-4">
                                     <h6 class="fw-bold mb-3">Basic Information</h6>
                                     
                                     <div class="mb-3 form-floating">
                                         <input type="text" class="form-control" id="title" th:field="*{title}"
                                                th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" 
-                                               placeholder="Enter a title">
+                                               placeholder="Enter a title" required
+                                               minlength="3" maxlength="100">
                                         <label for="title" class="required">Title</label>
                                         <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}"
                                              th:errors="*{title}"></div>
@@ -134,15 +135,15 @@
                                     <div class="mb-3">
                                         <label for="category" class="required fw-medium">Category</label>
                                         <select class="form-select" id="category" th:field="*{category}" 
-                                                th:classappend="${#fields.hasErrors('category')} ? 'is-invalid'">
+                                                th:classappend="${#fields.hasErrors('category')} ? 'is-invalid'"
+                                                required>
                                             <option value="">-- Select a category --</option>
                                             <option th:each="cat : ${categories}" 
                                                     th:value="${cat.id}" 
                                                     th:text="${cat.name}"></option>
                                         </select>
-                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}">
-                                            Please select a category
-                                        </div>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}"
+                                             th:errors="*{category}"></div>
                                         <div class="form-text">Choose the most appropriate category for your item</div>
                                     </div>
                                     
@@ -150,7 +151,8 @@
                                         <label for="description" class="required fw-medium">Description</label>
                                         <textarea class="form-control" id="description" th:field="*{description}"
                                                   rows="6" th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"
-                                                  placeholder="Enter a detailed description"></textarea>
+                                                  placeholder="Enter a detailed description" required
+                                                  minlength="10" maxlength="1000"></textarea>
                                         <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}"
                                              th:errors="*{description}"></div>
                                         <div class="form-text">
@@ -165,28 +167,31 @@
                                     
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label for="startingPrice" class="required fw-medium">Starting Price ($)</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">$</span>
-                                                <input type="number" class="form-control" id="startingPrice" 
-                                                       th:field="*{startingPrice}" step="0.01" min="0.01"
-                                                       th:classappend="${#fields.hasErrors('startingPrice')} ? 'is-invalid'"
-                                                       placeholder="Enter starting price">
-                                            </div>
-                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('startingPrice')}"
-                                                 th:errors="*{startingPrice}"></div>
-                                            <div class="form-text">Set a reasonable starting price to attract initial bids</div>
+                                            <label for="startingPrice" class="form-label required-field">Starting Price ($)</label>
+                                            <input type="number" class="form-control" id="startingPrice" th:field="*{startingPrice}" 
+                                                   min="0.01" step="0.01" required>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('startingPrice')}" th:errors="*{startingPrice}"></div>
                                         </div>
                                         
                                         <div class="col-md-6 mb-3">
-                                            <label for="endDate" class="required fw-medium">Auction End Date</label>
-                                            <input type="datetime-local" class="form-control" id="endDate" 
-                                                   th:field="*{endDate}"
-                                                   th:classappend="${#fields.hasErrors('endDate')} ? 'is-invalid'"
-                                                   placeholder="Select end date">
-                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('endDate')}"
-                                                 th:errors="*{endDate}"></div>
-                                            <div class="form-text">Longer auctions may receive more bids</div>
+                                            <label for="currentPrice" class="form-label required-field">Current Price ($)</label>
+                                            <input type="number" class="form-control" id="currentPrice" th:field="*{currentPrice}" 
+                                                   min="0.01" step="0.01" required>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('currentPrice')}" th:errors="*{currentPrice}"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="startDate" class="form-label required-field">Start Date</label>
+                                            <input type="datetime-local" class="form-control" id="startDate" th:field="*{startDate}" required>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="endDate" class="form-label required-field">End Date</label>
+                                            <input type="datetime-local" class="form-control" id="endDate" th:field="*{endDate}" required>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -283,12 +288,58 @@
     
     <script layout:fragment="javascript">
         document.addEventListener('DOMContentLoaded', function() {
+            // Set default values for start date and current price
+            const startDateInput = document.getElementById('startDate');
+            const currentPriceInput = document.getElementById('currentPrice');
+            const startingPriceInput = document.getElementById('startingPrice');
+            const endDateInput = document.getElementById('endDate');
+            
+            // Set current time once and use it for both start and end dates
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // Adjust for timezone
+            
+            // Set start date to current time
+            startDateInput.value = now.toISOString().slice(0, 16);
+            
+            // Set minimum end date to current time
+            endDateInput.min = now.toISOString().slice(0, 16);
+            
+            // Set current price to match starting price
+            startingPriceInput.addEventListener('input', function() {
+                currentPriceInput.value = this.value;
+            });
+            
+            // Initialize current price with starting price
+            if (startingPriceInput.value) {
+                currentPriceInput.value = startingPriceInput.value;
+            }
+            
+            // Form validation
+            const form = document.querySelector('.needs-validation');
+            form.addEventListener('submit', function(event) {
+                // Validate end date is after start date
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+                
+                if (endDate <= startDate) {
+                    event.preventDefault();
+                    endDateInput.setCustomValidity('End date must be after start date');
+                } else {
+                    endDateInput.setCustomValidity('');
+                }
+                
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+
             // Preview functionality
             const titleInput = document.getElementById('title');
             const descriptionInput = document.getElementById('description');
             const priceInput = document.getElementById('startingPrice');
             const categorySelect = document.getElementById('category');
-            const endDateInput = document.getElementById('endDate');
             
             const previewTitle = document.getElementById('preview-title');
             const previewDescription = document.getElementById('preview-description');
@@ -324,7 +375,7 @@
                 }
             }
             
-            // Add event listeners
+            // Add event listeners for real-time preview
             titleInput.addEventListener('input', updatePreview);
             descriptionInput.addEventListener('input', updatePreview);
             priceInput.addEventListener('input', updatePreview);
@@ -333,7 +384,7 @@
             
             // Initial preview update
             updatePreview();
-            
+
             // Image upload functionality (placeholder for future implementation)
             const dropArea = document.getElementById('dropArea');
             const imageUpload = document.getElementById('imageUpload');
@@ -380,62 +431,27 @@
             }
             
             function handleFiles(e) {
-                const files = e.target.files;
-                // For demonstration purposes - no actual upload happens
-                if (files.length > 5) {
-                    alert('You can upload a maximum of 5 images');
+                const files = [...e.target.files];
+                files.forEach(previewFile);
+            }
+            
+            function previewFile(file) {
+                if (!file.type.startsWith('image/')) {
                     return;
                 }
                 
-                imagePreview.innerHTML = '';
-                
-                for (let i = 0; i < files.length && i < 5; i++) {
-                    const file = files[i];
-                    if (!file.type.match('image.*')) {
-                        continue;
-                    }
-                    
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const container = document.createElement('div');
-                        container.className = 'preview-image-container';
-                        
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'preview-image';
-                        
-                        const removeBtn = document.createElement('div');
-                        removeBtn.className = 'remove-image';
-                        removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                        removeBtn.onclick = function() {
-                            container.remove();
-                        };
-                        
-                        container.appendChild(img);
-                        container.appendChild(removeBtn);
-                        imagePreview.appendChild(container);
-                    };
-                    
-                    reader.readAsDataURL(file);
-                }
-                
-                // Show alert about image feature not being implemented yet
-                if (files.length > 0) {
-                    const alertHTML = `
-                        <div class="alert alert-warning mt-3">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Note:</strong> Image upload is just a preview. The actual functionality will be implemented soon.
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onloadend = function() {
+                    const div = document.createElement('div');
+                    div.className = 'preview-image-container';
+                    div.innerHTML = `
+                        <img src="${reader.result}" class="preview-image" alt="Preview">
+                        <div class="remove-image" onclick="this.parentElement.remove()">
+                            <i class="fas fa-times"></i>
                         </div>
                     `;
-                    imagePreview.insertAdjacentHTML('afterend', alertHTML);
-                    
-                    // Remove alert after 5 seconds
-                    setTimeout(() => {
-                        const alert = imagePreview.nextElementSibling;
-                        if (alert && alert.classList.contains('alert')) {
-                            alert.remove();
-                        }
-                    }, 5000);
+                    imagePreview.appendChild(div);
                 }
             }
         });

@@ -3,8 +3,6 @@ package com.SnapBid.websocket;
 import com.SnapBid.model.Auction;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 
 public class AuctionMessage {
     private Long id;
@@ -14,6 +12,8 @@ public class AuctionMessage {
     private LocalDateTime endDate;
     private String seller;
     private LocalDateTime createdAt;
+    private String category;
+    private int bidCount;
 
     public AuctionMessage(Auction auction) {
         this.id = auction.getId();
@@ -23,6 +23,8 @@ public class AuctionMessage {
         this.endDate = auction.getEndDate();
         this.seller = auction.getSeller().getUsername();
         this.createdAt = auction.getCreatedAt();
+        this.category = auction.getCategory() != null ? auction.getCategory().getName() : "Uncategorized";
+        this.bidCount = auction.getBids() != null ? auction.getBids().size() : 0;
     }
 
     // Getters and setters
@@ -46,4 +48,10 @@ public class AuctionMessage {
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+
+    public int getBidCount() { return bidCount; }
+    public void setBidCount(int bidCount) { this.bidCount = bidCount; }
 } 

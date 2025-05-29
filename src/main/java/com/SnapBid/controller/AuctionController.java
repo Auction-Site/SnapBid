@@ -11,14 +11,17 @@ import com.SnapBid.service.UserService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -28,15 +31,14 @@ public class AuctionController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuctionController.class);
 
-    private final AuctionService auctionService;
-    private final UserService userService;
-    private final CategoryService categoryService;
+    @Autowired
+    private AuctionService auctionService;
 
-    public AuctionController(AuctionService auctionService, UserService userService, CategoryService categoryService) {
-        this.auctionService = auctionService;
-        this.userService = userService;
-        this.categoryService = categoryService;
-    }
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private CategoryService categoryService;
 
     @GetMapping
     public String listAuctions(Model model, 
@@ -52,7 +54,7 @@ public class AuctionController {
             model.addAttribute("keyword", keyword);
             logger.info("Search results for '{}': {} auctions found", keyword, auctions.size());
         } else {
-            auctions = auctionService.getActiveAuctions();
+            auctions = auctionService.getAllActiveAuctions();
             logger.info("Loading all active auctions: {} found", auctions.size());
         }
         
@@ -68,16 +70,9 @@ public class AuctionController {
 
     @GetMapping("/create")
     public String showCreateForm(Model model) {
-        if (!model.containsAttribute("auction")) {
-            Auction auction = new Auction();
-            auction.setStartDate(LocalDateTime.now());
-            auction.setEndDate(LocalDateTime.now().plusDays(7));
-            model.addAttribute("auction", auction);
-        }
-        
-        // Add category list to the model
-        List<Category> categories = categoryService.getAllCategories();
-        model.addAttribute("categories", categories);
+        logger.info("Showing auction creation form");
+        model.addAttribute("auction", new Auction());
+        model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("title", "Create Auction");
         
         return "auction/create";
@@ -85,60 +80,58 @@ public class AuctionController {
 
     @PostMapping("/create")
     public String createAuction(@Valid @ModelAttribute("auction") Auction auction,
-                              BindingResult result,
-                              @RequestParam(required = false, defaultValue = "false") boolean showInList,
-                              Model model,
+                              BindingResult bindingResult,
+                              @AuthenticationPrincipal User currentUser,
                               RedirectAttributes redirectAttributes) {
-        // Add category list to the model for validation errors
-        if (result.hasErrors()) {
-            List<Category> categories = categoryService.getAllCategories();
-            model.addAttribute("categories", categories);
-            model.addAttribute("title", "Create Auction");
+        logger.info("Received auction creation request from user: {}", currentUser.getUsername());
+        
+        if (currentUser == null || currentUser.getId() == null) {
+            logger.error("User not properly authenticated or not found in database");
+            redirectAttributes.addFlashAttribute("errorMessage", 
+                "You must be logged in to create an auction.");
+            return "redirect:/login";
+        }
+        
+        if (bindingResult.hasErrors()) {
+            logger.warn("Auction creation form validation failed for user {}: {}", 
+                currentUser.getUsername(),
+                bindingResult.getAllErrors().stream()
+                    .map(error -> error.getDefaultMessage())
+                    .collect(java.util.stream.Collectors.joining(", ")));
             return "auction/create";
         }
 
         try {
-            // Get authenticated user
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
-                return "redirect:/login?error=notAuthenticated";
+            User seller = userService.findByUsername(currentUser.getUsername());
+            if (seller == null || seller.getId() == null) {
+                logger.error("User not found in database: {}", currentUser.getUsername());
+                redirectAttributes.addFlashAttribute("errorMessage", 
+                    "User account not found. Please try logging in again.");
+                return "redirect:/login";
             }
             
-            User seller = userService.findByUsername(auth.getName());
-
-            // Set startDate to current time if not set
-            if (auction.getStartDate() == null) {
-                auction.setStartDate(LocalDateTime.now());
-            }
+            Auction createdAuction = auctionService.createAuction(auction, seller, bindingResult);
             
-            // Set current price to starting price initially
-            auction.setCurrentPrice(auction.getStartingPrice());
-            
-            // Set auction status to ACTIVE
-            auction.setStatus(AuctionStatus.ACTIVE);
-            
-            // Save the auction
-            Auction savedAuction = auctionService.createAuction(auction, seller);
-            
-            // Add success message
-            String successMessage = "Your auction '" + savedAuction.getTitle() + "' has been created successfully!";
-            redirectAttributes.addFlashAttribute("successMessage", successMessage);
-            
-            // Redirect based on showInList parameter
-            if (showInList) {
-                redirectAttributes.addAttribute("newAuctionId", savedAuction.getId());
+            if (createdAuction != null) {
+                logger.info("Auction created successfully: id={}, title={}", 
+                    createdAuction.getId(), 
+                    createdAuction.getTitle());
+                redirectAttributes.addFlashAttribute("successMessage", 
+                    "Auction created successfully!");
                 return "redirect:/auctions";
             } else {
-                // Redirect to the newly created auction detail page with new=true parameter
-                return "redirect:/auctions/" + savedAuction.getId() + "?new=true";
+                logger.warn("Auction creation failed for user {}: validation errors", 
+                    currentUser.getUsername());
+                return "auction/create";
             }
-        } catch (RuntimeException e) {
-            // Add category list to the model when there are errors
-            List<Category> categories = categoryService.getAllCategories();
-            model.addAttribute("categories", categories);
-            model.addAttribute("error", e.getMessage());
-            model.addAttribute("title", "Create Auction");
-            return "auction/create";
+        } catch (Exception e) {
+            logger.error("Error creating auction for user {}: {}", 
+                currentUser.getUsername(), 
+                e.getMessage(), 
+                e);
+            redirectAttributes.addFlashAttribute("errorMessage", 
+                "Failed to create auction. Please try again.");
+            return "redirect:/auctions/create";
         }
     }
 
@@ -148,49 +141,46 @@ public class AuctionController {
                             Model model) {
         logger.info("Loading auction details page for auction ID: {}", id);
         
-        try {
-            Auction auction = auctionService.findById(id);
-            model.addAttribute("auction", auction);
-            model.addAttribute("bid", new Bid());
-            model.addAttribute("title", auction.getTitle() + " - Auction Details");
-            
-            if (Boolean.TRUE.equals(isNew)) {
-                model.addAttribute("successMessage", "Your auction has been created successfully!");
-            }
-            
-            return "auction/detail";
-        } catch (Exception e) {
-            logger.error("Error loading auction {}: {}", id, e.getMessage());
-            model.addAttribute("error", "Auction not found");
-            return "redirect:/auctions";
-        }
+        return auctionService.getAuctionById(id)
+                .map(auction -> {
+                    model.addAttribute("auction", auction);
+                    model.addAttribute("bid", new Bid());
+                    model.addAttribute("title", auction.getTitle() + " - Auction Details");
+                    
+                    if (Boolean.TRUE.equals(isNew)) {
+                        model.addAttribute("successMessage", "Your auction has been created successfully!");
+                    }
+                    
+                    return "auction/detail";
+                })
+                .orElse("redirect:/auctions");
     }
 
     @PostMapping("/{id}/bid")
+    @ResponseBody
     public String placeBid(@PathVariable Long id,
-                          @Valid @ModelAttribute("bid") Bid bid,
-                          BindingResult result,
-                          Model model,
+                          @RequestParam BigDecimal amount,
+                          @AuthenticationPrincipal User bidder,
                           RedirectAttributes redirectAttributes) {
-        if (result.hasErrors()) {
-            Auction auction = auctionService.findById(id);
-            model.addAttribute("auction", auction);
-            return "auction/detail";
-        }
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User bidder = userService.findByUsername(auth.getName());
-        Auction auction = auctionService.findById(id);
-
         try {
-            auctionService.placeBid(auction, bidder, bid.getAmount());
-            redirectAttributes.addFlashAttribute("successMessage", "Your bid has been placed successfully!");
-            return "redirect:/auctions/" + id;
-        } catch (RuntimeException e) {
-            model.addAttribute("error", e.getMessage());
-            model.addAttribute("auction", auction);
-            return "auction/detail";
+            Auction auction = auctionService.getAuctionById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+
+            auctionService.placeBid(auction, bidder, amount);
+            return "success";
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();
         }
+    }
+
+    @PostMapping("/{id}/end")
+    public String endAuction(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        Auction auction = auctionService.getAuctionById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+
+        auctionService.endAuction(auction);
+        redirectAttributes.addFlashAttribute("successMessage", "Auction ended successfully");
+        return "redirect:/auctions/" + id;
     }
 
     @GetMapping("/my-auctions")
