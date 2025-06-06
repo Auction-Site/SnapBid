@@ -1,4 +1,4 @@
--- Drop existing tables if they exist
+-- Drop existing tables if they exist (in correct dependency order)
 DROP TABLE IF EXISTS watchlist;
 DROP TABLE IF EXISTS bids;
 DROP TABLE IF EXISTS auctions;
@@ -72,19 +72,4 @@ CREATE TABLE watchlist (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (auction_id) REFERENCES auctions(id),
     UNIQUE KEY unique_watchlist (user_id, auction_id)
-);
-
--- Insert default categories
-INSERT INTO categories (name, description) VALUES 
-('Electronics', 'Electronic devices and gadgets'),
-('Clothing', 'Clothes, shoes, and accessories'),
-('Home & Garden', 'Items for home and garden'),
-('Sports', 'Sports equipment and accessories'),
-('Collectibles', 'Rare items and collectibles'),
-('Vehicles', 'Cars, motorcycles, and other vehicles'),
-('Toys & Games', 'Toys, games, and entertainment items'),
-('Art', 'Paintings, sculptures, and art pieces');
-
--- Insert demo user (password: password123)
-INSERT INTO users (username, email, password, first_name, last_name) VALUES 
-('demouser', 'demo@example.com', '$2a$10$3QGm2v7LRznxWwCYQMfH3.QiObqRbRQ6rIKXn5WHVjOHCxwZTrS5.', 'Demo', 'User'); 
+); 

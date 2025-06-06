@@ -54,12 +54,15 @@ public class WebController {
         try {
             userService.registerUser(user);
             logger.info("User successfully registered: {}", user.getUsername());
-            redirectAttributes.addAttribute("registered", "true");
+            redirectAttributes.addFlashAttribute("registeredMsg", "Registration successful! Please login with your credentials.");
             return "redirect:/login";
         } catch (RuntimeException e) {
             logger.error("Error during registration: {}", e.getMessage());
             model.addAttribute("error", e.getMessage());
             model.addAttribute("title", "Register");
+            // Preserve the form data except for the password
+            user.setPassword("");
+            model.addAttribute("user", user);
             return "auth/register";
         }
     }

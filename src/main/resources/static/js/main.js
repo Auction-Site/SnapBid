@@ -1,6 +1,3 @@
-/**
- * SnapBid main JavaScript file
- */
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));

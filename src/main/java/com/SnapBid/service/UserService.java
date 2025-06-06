@@ -8,10 +8,13 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class UserService implements UserDetailsService {
-
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -21,31 +24,43 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        logger.debug("Loading user by username: {}", username);
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
     }
 
     @Transactional
     public User registerUser(User user) {
+        logger.info("Registering new user: {}", user.getUsername());
+        
         if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            logger.warn("Registration failed: Email already exists - {}", user.getEmail());
+            throw new RuntimeException("This email address is already registered. Please use a different email or try logging in.");
         }
         
         if (userRepository.existsByUsername(user.getUsername())) {
-            throw new RuntimeException("Username already exists");
+            logger.warn("Registration failed: Username already exists - {}", user.getUsername());
+            throw new RuntimeException("This username is already taken. Please choose a different username.");
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        logger.info("User registered successfully: {}", savedUser.getUsername());
+        return savedUser;
     }
 
+    @Transactional(readOnly = true)
     public User findByUsername(String username) {
+        logger.debug("Finding user by username: {}", username);
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    @Transactional(readOnly = true)
     public User findByEmail(String email) {
+        logger.debug("Finding user by email: {}", email);
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
