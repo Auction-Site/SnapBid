@@ -11,7 +11,10 @@
     <body>
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
             <div class="container">
-                <a class="navbar-brand fw-bold text-primary" href="/">SnapBid</a>
+                <a class="navbar-brand fw-bold text-primary" href="/">
+                    <img src="/images/logo.png" alt="SnapBid Logo" height="30" class="me-2">
+                    SnapBid
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -50,7 +53,12 @@
                                 <h2 class="text-center mb-4">Create Account</h2>
                                 <p class="text-center text-muted mb-4">Join SnapBid to start bidding on amazing items</p>
                                 
-                                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+                                <!-- Error Messages -->
+                                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                    <span th:text="${error}"></span>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
                                 
                                 <form th:action="@{/register}" method="post" th:object="${user}">
                                     <div class="mb-3">
