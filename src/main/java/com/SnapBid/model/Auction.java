@@ -1,5 +1,6 @@
 package com.SnapBid.model;
 
+import com.SnapBid.validation.OnCreate;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -35,7 +36,7 @@ public class Auction {
     private BigDecimal currentPrice;
 
     @NotNull(message = "Start date is required")
-    @FutureOrPresent(message = "Start date must be in the present or future")
+    @FutureOrPresent(message = "Start date must be in the present or future", groups = OnCreate.class)
     private LocalDateTime startDate;
 
     @NotNull(message = "End date is required")

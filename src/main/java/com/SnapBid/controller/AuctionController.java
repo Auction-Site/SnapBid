@@ -135,7 +135,6 @@ public class AuctionController {
 
     @PostMapping("/{id}/bid")
     @Transactional
-    @ResponseBody
     public String placeBid(@PathVariable("id") Long auctionId, @RequestParam("amount") BigDecimal amount, @AuthenticationPrincipal User bidder, RedirectAttributes redirectAttributes) {
         try {
             Optional<Auction> auctionOptional = auctionService.getAuctionById(auctionId);

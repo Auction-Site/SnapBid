@@ -6,6 +6,7 @@ import com.SnapBid.model.Bid;
 import com.SnapBid.model.User;
 import com.SnapBid.repository.AuctionRepository;
 import com.SnapBid.repository.BidRepository;
+import com.SnapBid.validation.OnCreate;
 import com.SnapBid.websocket.WebSocketController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -68,8 +70,8 @@ public class AuctionService {
             auction.setCreatedAt(now);
             auction.setCurrentPrice(auction.getStartingPrice());
             
-            // Validate auction data
-            validateAuction(auction, bindingResult);
+            // Validate auction data for creation group
+            validateAuction(auction, bindingResult, OnCreate.class);
             if (bindingResult.hasErrors()) {
                 logger.warn("Auction validation failed for seller {}: {}", 
                     seller.getUsername(), 
@@ -171,17 +173,7 @@ public class AuctionService {
     @Transactional
     public Auction placeBid(Auction auction, User bidder, BigDecimal amount) {
         // Validate bid
-        if (amount.compareTo(auction.getCurrentPrice()) <= 0) {
-            throw new IllegalArgumentException("Bid amount must be higher than current price");
-        }
-
-        if (auction.getStatus() != AuctionStatus.ACTIVE) {
-            throw new IllegalArgumentException("Cannot bid on inactive auction");
-        }
-
-        if (auction.getEndDate().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Auction has ended");
-        }
+        validateBid(auction, bidder, amount);
 
         // Create and save bid
         Bid bid = new Bid();
@@ -254,10 +246,15 @@ public class AuctionService {
 
     @Transactional(readOnly = true)
     public List<Auction> getUserWonAuctions(User user) {
-        return auctionRepository.findByStatusAndWinner(AuctionStatus.ENDED, user);
+        return bidRepository.findByBidderAndAuctionStatus(user, AuctionStatus.ENDED).stream()
+            .map(Bid::getAuction)
+            .filter(auction -> auction.getWinner() != null && auction.getWinner().equals(user))
+            .distinct()
+            .collect(Collectors.toList());
     }
 
-    private void validateAuction(Auction auction, BindingResult bindingResult) {
+    // Method for common auction validation
+    private void validateAuction(Auction auction, BindingResult bindingResult, Class<?>... groups) {
         logger.debug("Validating auction: title={}", auction.getTitle());
         
         // Validate title
@@ -297,5 +294,23 @@ public class AuctionService {
         }
         
         logger.debug("Auction validation completed with {} errors", bindingResult.getErrorCount());
+    }
+
+    private void validateBid(Auction auction, User bidder, BigDecimal amount) {
+        if (amount.compareTo(auction.getCurrentPrice()) <= 0) {
+            throw new IllegalArgumentException("Bid amount must be higher than current price");
+        }
+
+        if (auction.getStatus() != AuctionStatus.ACTIVE) {
+            throw new IllegalArgumentException("Cannot bid on inactive auction");
+        }
+
+        if (auction.getEndDate().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Auction has ended");
+        }
+
+        if (auction.getSeller().equals(bidder)) {
+            throw new IllegalArgumentException("Seller cannot bid on their own auction");
+        }
     }
 } 

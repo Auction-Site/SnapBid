@@ -1,6 +1,7 @@
 package com.SnapBid.repository;
 
 import com.SnapBid.model.Auction;
+import com.SnapBid.model.AuctionStatus;
 import com.SnapBid.model.Bid;
 import com.SnapBid.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,4 +30,7 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
     List<Bid> findByAuctionOrderByBidTimeDesc(Auction auction);
     List<Bid> findByBidderOrderByBidTimeDesc(User bidder);
     Optional<Bid> findTopByAuctionOrderByAmountDesc(Auction auction);
+
+    // Method to find bids by bidder and auction status (for 'My Bids' or 'Won Auctions' logic)
+    List<Bid> findByBidderAndAuctionStatus(User bidder, AuctionStatus status);
 } 
