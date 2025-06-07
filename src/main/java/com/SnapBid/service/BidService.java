@@ -17,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
+@Transactional
 public class BidService {
 
     private final BidRepository bidRepository;
@@ -82,14 +83,17 @@ public class BidService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<Bid> getBidsByAuction(Auction auction) {
         return bidRepository.findByAuctionOrderByBidTimeDesc(auction);
     }
 
+    @Transactional(readOnly = true)
     public List<Bid> getBidsByUser(User user) {
         return bidRepository.findByBidderOrderByBidTimeDesc(user);
     }
 
+    @Transactional(readOnly = true)
     public Bid getHighestBid(Auction auction) {
         return bidRepository.findTopByAuctionOrderByAmountDesc(auction)
             .orElse(null);

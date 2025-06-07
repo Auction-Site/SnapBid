@@ -9,7 +9,6 @@ import com.SnapBid.repository.BidRepository;
 import com.SnapBid.websocket.WebSocketController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
@@ -22,23 +21,28 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class AuctionService {
     private static final Logger logger = LoggerFactory.getLogger(AuctionService.class);
 
-    @Autowired
-    private AuctionRepository auctionRepository;
+    private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
-    @Autowired
-    private WebSocketController webSocketController;
+    private final WebSocketController webSocketController;
 
-    public AuctionService(BidRepository bidRepository) {
+    public AuctionService(AuctionRepository auctionRepository,
+                         BidRepository bidRepository,
+                         WebSocketController webSocketController) {
+        this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
+        this.webSocketController = webSocketController;
     }
 
+    @Transactional(readOnly = true)
     public List<Auction> getAllAuctions() {
         return auctionRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Optional<Auction> getAuctionById(Long id) {
         return auctionRepository.findById(id);
     }
@@ -114,6 +118,7 @@ public class AuctionService {
         }
     }
 
+    @Transactional
     public Auction updateAuction(Long id, Auction auctionDetails) {
         Optional<Auction> optionalAuction = auctionRepository.findById(id);
         if (optionalAuction.isPresent()) {
@@ -130,14 +135,17 @@ public class AuctionService {
         return null;
     }
 
+    @Transactional
     public void deleteAuction(Long id) {
         auctionRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Auction> getActiveAuctions() {
         return auctionRepository.findByStatus(AuctionStatus.ACTIVE);
     }
 
+    @Transactional(readOnly = true)
     public List<Auction> getEndedAuctions() {
         return auctionRepository.findByStatus(AuctionStatus.ENDED);
     }
@@ -149,6 +157,7 @@ public class AuctionService {
         auctionRepository.save(auction);
     }
 
+    @Transactional
     public void cancelAuction(Long id) {
         Optional<Auction> optionalAuction = auctionRepository.findById(id);
         if (optionalAuction.isPresent()) {
@@ -190,10 +199,12 @@ public class AuctionService {
         return auctionRepository.save(auction);
     }
 
+    @Transactional(readOnly = true)
     public List<Auction> getUserAuctions(User user) {
         return auctionRepository.findBySeller(user);
     }
 
+    @Transactional(readOnly = true)
     public List<Auction> getUserBids(User user) {
         return auctionRepository.findByBids_Bidder(user);
     }
@@ -241,14 +252,8 @@ public class AuctionService {
         }
     }
 
-    /**
-     * Find auctions that have been won by a specific user
-     * @param user The user who has won auctions
-     * @return List of auctions won by the user
-     */
     @Transactional(readOnly = true)
     public List<Auction> getUserWonAuctions(User user) {
-        // Get all ended auctions where the winner is the specified user
         return auctionRepository.findByStatusAndWinner(AuctionStatus.ENDED, user);
     }
 

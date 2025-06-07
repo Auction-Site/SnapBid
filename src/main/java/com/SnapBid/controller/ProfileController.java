@@ -9,6 +9,7 @@ import com.SnapBid.service.UserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +31,7 @@ public class ProfileController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public String profile(Model model) {
         // Get current authenticated user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

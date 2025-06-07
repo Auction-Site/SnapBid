@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -27,20 +28,24 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/auctions")
+@Transactional
 public class AuctionController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuctionController.class);
 
-    @Autowired
-    private AuctionService auctionService;
+    private final AuctionService auctionService;
+    private final UserService userService;
+    private final CategoryService categoryService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
-    private CategoryService categoryService;
+    public AuctionController(AuctionService auctionService, UserService userService, CategoryService categoryService) {
+        this.auctionService = auctionService;
+        this.userService = userService;
+        this.categoryService = categoryService;
+    }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public String listAuctions(Model model, 
                              @RequestParam(required = false) Long newAuctionId,
                              @RequestParam(required = false) String keyword,
@@ -69,6 +74,7 @@ public class AuctionController {
     }
 
     @GetMapping("/create")
+    @Transactional(readOnly = true)
     public String showCreateForm(Model model) {
         logger.info("Showing auction creation form");
         model.addAttribute("auction", new Auction());
@@ -79,63 +85,40 @@ public class AuctionController {
     }
 
     @PostMapping("/create")
+    @Transactional
     public String createAuction(@Valid @ModelAttribute("auction") Auction auction,
                               BindingResult bindingResult,
-                              @AuthenticationPrincipal User currentUser,
+                              @AuthenticationPrincipal User seller,
+                              Model model,
                               RedirectAttributes redirectAttributes) {
-        logger.info("Received auction creation request from user: {}", currentUser.getUsername());
-        
-        if (currentUser == null || currentUser.getId() == null) {
-            logger.error("User not properly authenticated or not found in database");
-            redirectAttributes.addFlashAttribute("errorMessage", 
-                "You must be logged in to create an auction.");
-            return "redirect:/login";
-        }
+        logger.info("Processing auction creation request from seller: {}", seller.getUsername());
         
         if (bindingResult.hasErrors()) {
-            logger.warn("Auction creation form validation failed for user {}: {}", 
-                currentUser.getUsername(),
-                bindingResult.getAllErrors().stream()
-                    .map(error -> error.getDefaultMessage())
-                    .collect(java.util.stream.Collectors.joining(", ")));
+            logger.warn("Validation errors in auction creation form");
+            model.addAttribute("categories", categoryService.getAllCategories());
             return "auction/create";
         }
 
         try {
-            User seller = userService.findByUsername(currentUser.getUsername());
-            if (seller == null || seller.getId() == null) {
-                logger.error("User not found in database: {}", currentUser.getUsername());
-                redirectAttributes.addFlashAttribute("errorMessage", 
-                    "User account not found. Please try logging in again.");
-                return "redirect:/login";
-            }
-            
-            Auction createdAuction = auctionService.createAuction(auction, seller, bindingResult);
-            
-            if (createdAuction != null) {
-                logger.info("Auction created successfully: id={}, title={}", 
-                    createdAuction.getId(), 
-                    createdAuction.getTitle());
-                redirectAttributes.addFlashAttribute("successMessage", 
-                    "Auction created successfully!");
-                return "redirect:/auctions";
+            Auction savedAuction = auctionService.createAuction(auction, seller, bindingResult);
+            if (savedAuction != null) {
+                redirectAttributes.addFlashAttribute("successMessage", "Auction created successfully!");
+                return "redirect:/auctions/" + savedAuction.getId() + "?new=true";
             } else {
-                logger.warn("Auction creation failed for user {}: validation errors", 
-                    currentUser.getUsername());
+                model.addAttribute("error", "Failed to create auction");
+                model.addAttribute("categories", categoryService.getAllCategories());
                 return "auction/create";
             }
         } catch (Exception e) {
-            logger.error("Error creating auction for user {}: {}", 
-                currentUser.getUsername(), 
-                e.getMessage(), 
-                e);
-            redirectAttributes.addFlashAttribute("errorMessage", 
-                "Failed to create auction. Please try again.");
-            return "redirect:/auctions/create";
+            logger.error("Error creating auction: {}", e.getMessage(), e);
+            model.addAttribute("error", "An error occurred while creating the auction");
+            model.addAttribute("categories", categoryService.getAllCategories());
+            return "auction/create";
         }
     }
 
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public String viewAuction(@PathVariable Long id, 
                             @RequestParam(value = "new", required = false) Boolean isNew,
                             Model model) {
@@ -157,6 +140,7 @@ public class AuctionController {
     }
 
     @PostMapping("/{id}/bid")
+    @Transactional
     @ResponseBody
     public String placeBid(@PathVariable Long id,
                           @RequestParam BigDecimal amount,
@@ -173,33 +157,36 @@ public class AuctionController {
         }
     }
 
-    @PostMapping("/{id}/end")
-    public String endAuction(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        Auction auction = auctionService.getAuctionById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
-
-        auctionService.endAuction(auction);
-        redirectAttributes.addFlashAttribute("successMessage", "Auction ended successfully");
-        return "redirect:/auctions/" + id;
-    }
-
     @GetMapping("/my-auctions")
-    public String myAuctions(Model model) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User user = userService.findByUsername(auth.getName());
-        
-        List<Auction> myAuctions = auctionService.getUserAuctions(user);
-        model.addAttribute("auctions", myAuctions);
+    @Transactional(readOnly = true)
+    public String myAuctions(Model model, @AuthenticationPrincipal User user) {
+        List<Auction> userAuctions = auctionService.getUserAuctions(user);
+        model.addAttribute("auctions", userAuctions);
+        model.addAttribute("title", "My Auctions");
         return "auction/my-auctions";
     }
 
     @GetMapping("/my-bids")
-    public String myBids(Model model) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User user = userService.findByUsername(auth.getName());
-        
-        List<Auction> myBids = auctionService.getUserBids(user);
-        model.addAttribute("auctions", myBids);
+    @Transactional(readOnly = true)
+    public String myBids(Model model, @AuthenticationPrincipal User user) {
+        List<Auction> biddedAuctions = auctionService.getUserBids(user);
+        model.addAttribute("auctions", biddedAuctions);
+        model.addAttribute("title", "My Bids");
         return "auction/my-bids";
+    }
+
+    @PostMapping("/{id}/end")
+    @Transactional
+    public String endAuction(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            Auction auction = auctionService.getAuctionById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+            
+            auctionService.endAuction(auction);
+            redirectAttributes.addFlashAttribute("successMessage", "Auction ended successfully");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/auctions/" + id;
     }
 } 

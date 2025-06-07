@@ -3,6 +3,7 @@ package com.SnapBid.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import lombok.ToString;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -18,12 +19,14 @@ public class Bid {
     @DecimalMin(value = "0.01", message = "Bid amount must be greater than 0")
     private BigDecimal amount;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "auction_id", nullable = false)
+    @ToString.Exclude
     private Auction auction;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bidder_id", nullable = false)
+    @ToString.Exclude
     private User bidder;
 
     @Column(name = "created_at")
