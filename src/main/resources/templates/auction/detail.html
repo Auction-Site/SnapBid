@@ -133,6 +133,8 @@
                             <div class="d-flex align-items-center mb-3">
                                 <span class="badge bg-primary me-2" th:text="${auction.category.name}">Category</span>
                                 <small class="text-muted">Listed by <span th:text="${auction.seller.username}">Seller</span></small>
+                                <span th:if="${#authentication.principal.id == auction.seller.id}" 
+                                      class="badge bg-info ms-2">Your Auction</span>
                             </div>
                             <p class="text-muted" th:text="${auction.description}">Auction description...</p>
                         </div>
@@ -250,7 +252,7 @@
                     </div>
 
                     <!-- Bid Form -->
-                    <div class="card" sec:authorize="isAuthenticated()">
+                    <div class="card" sec:authorize="isAuthenticated()" th:unless="${#authentication.principal.id == auction.seller.id}">
                         <div class="card-body">
                             <h3 class="mb-4">Place a Bid</h3>
                             
@@ -292,6 +294,27 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Seller View -->
+                    <div class="card" sec:authorize="isAuthenticated()" th:if="${#authentication.principal.id == auction.seller.id}">
+                        <div class="card-body">
+                            <h3 class="mb-4">Auction Management</h3>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                This is your auction. You cannot place bids on your own auction.
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a th:href="@{/auctions/{id}/edit(id=${auction.id})}" class="btn btn-outline-primary">
+                                    <i class="fas fa-edit me-2"></i>Edit Auction
+                                </a>
+                                <button th:if="${auction.status.name() == 'ACTIVE'}" 
+                                        class="btn btn-outline-danger"
+                                        onclick="confirmEndAuction()">
+                                    <i class="fas fa-flag-checkered me-2"></i>End Auction
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -305,6 +328,14 @@
             // WebSocket connection
             const socket = new SockJS('/ws');
             const stompClient = Stomp.over(socket);
+            
+            // Add auction end confirmation function
+            function confirmEndAuction() {
+                if (confirm('Are you sure you want to end this auction? This action cannot be undone.')) {
+                    const auctionId = document.getElementById('bid-form').dataset.auctionId;
+                    window.location.href = `/auctions/${auctionId}/end`;
+                }
+            }
             
             stompClient.connect({}, function(frame) {
                 console.log('Connected to WebSocket');

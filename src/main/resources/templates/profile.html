@@ -42,6 +42,24 @@
                 color: #6c757d;
                 border: 1px solid #6c757d;
             }
+            
+            /* Styles for Profile Tabs */
+            .nav-tabs .nav-link {
+                color: black !important; /* Force text color to black */
+                background-color: #f0f0f0; /* Light grey background for inactive tabs */
+                border: 1px solid #dee2e6; /* Add a visible border */
+                border-bottom-color: transparent; /* Hide bottom border for inactive tabs */
+            }
+
+            .nav-tabs .nav-link.active {
+                color: black !important; /* Force active tab text color to black */
+                background-color: #ffffff; /* White background for active tab */
+                border-color: #dee2e6 #dee2e6 #ffffff; /* Border around active tab */
+            }
+
+            .nav-tabs .nav-link:hover {
+                border-color: #e9ecef #e9ecef #dee2e6; /* Hover effect for inactive tabs */
+            }
         </style>
     </head>
     <body>
@@ -80,19 +98,19 @@
                                 <ul class="list-unstyled">
                                     <li class="mb-2">
                                         <i class="fas fa-gavel text-primary"></i> 
-                                        <span th:text="${wonAuctions.size()}">0</span> Auctions Won
+                                        <span th:text="${wonAuctions.size()}" class="fw-bold text-dark">0</span> Auctions Won
                                     </li>
                                     <li class="mb-2">
                                         <i class="fas fa-tag text-primary"></i> 
-                                        <span th:text="${userAuctions.size()}">0</span> Items Listed
+                                        <span th:text="${userAuctions.size()}" class="fw-bold text-dark">0</span> Items Listed
                                     </li>
                                     <li class="mb-2">
                                         <i class="fas fa-hand-paper text-primary"></i> 
-                                        <span th:text="${biddedAuctions.size()}">0</span> Active Bids
+                                        <span th:text="${biddedAuctions.size()}" class="fw-bold text-dark">0</span> Active Bids
                                     </li>
                                     <li>
                                         <i class="fas fa-envelope text-primary"></i> 
-                                        <span th:text="${user.email}">user@example.com</span>
+                                        <span th:text="${user.email}" class="fw-bold text-dark">user@example.com</span>
                                     </li>
                                 </ul>
                             </div>
@@ -224,26 +242,33 @@
                             <!-- Won Auctions -->
                             <div class="tab-pane fade" id="won">
                                 <div class="row row-cols-1 row-cols-md-2 g-4">
-                                    <!-- Won Auction Cards -->
+                                    <!-- User's Won Auctions -->
                                     <div th:each="auction : ${wonAuctions}" class="col">
                                         <div class="card h-100 shadow-sm">
-                                            <div class="position-relative">
-                                                <div class="position-absolute top-0 end-0 m-2 bg-success text-white rounded-pill px-3 py-1">
-                                                    Won
+                                            <div class="card-header bg-transparent">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <small class="text-muted" th:text="${auction.seller.username}">Seller</small>
+                                                    <span th:class="'status-badge badge-' + ${#strings.toLowerCase(auction.status)}" th:text="${auction.status}">Status</span>
                                                 </div>
                                             </div>
                                             <div class="card-body">
                                                 <h5 class="card-title" th:text="${auction.title}">Auction Title</h5>
-                                                <p class="card-text text-success fw-bold">Won for: 
-                                                    <span th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</span>
-                                                </p>
-                                                <div class="d-flex justify-content-between text-muted small mb-3">
-                                                    <span>Won on: <span th:text="${#temporals.format(auction.updatedAt, 'MMM dd, yyyy')}">Date</span></span>
-                                                    <span>Seller: <span th:text="${auction.seller.username}">Seller</span></span>
+                                                <p class="card-text text-muted" th:text="${#strings.abbreviate(auction.description,100)}">Auction description...</p>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>Final Price:</strong>
+                                                        <span class="text-success" th:text="${#numbers.formatDecimal(auction.currentPrice, 1, 2)}">$0.00</span>
+                                                    </div>
+                                                    <div>
+                                                        <strong>Ended On:</strong>
+                                                        <span th:text="${#temporals.format(auction.endDate, 'MMM dd, yyyy HH:mm')}">End date</span>
+                                                    </div>
                                                 </div>
-                                                <div class="d-grid">
-                                                    <a th:href="@{/auctions/{id}(id=${auction.id})}" class="btn btn-primary">View Details</a>
-                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-transparent">
+                                                <a th:href="@{/auctions/{id}(id=${auction.id})}" class="btn btn-outline-primary d-block">
+                                                    View Details
+                                                </a>
                                             </div>
                                         </div>
                                     </div>
@@ -251,7 +276,7 @@
                                 
                                 <div th:if="${#lists.isEmpty(wonAuctions)}" class="text-center py-5">
                                     <h3>You haven't won any auctions yet</h3>
-                                    <p class="text-muted">Keep bidding to win auctions</p>
+                                    <p class="text-muted">Keep bidding and good luck!</p>
                                     <a th:href="@{/auctions}" class="btn btn-primary mt-3">
                                         Browse Auctions
                                     </a>
