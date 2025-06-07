@@ -21,10 +21,12 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/auctions")
@@ -46,30 +48,21 @@ public class AuctionController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    public String listAuctions(Model model, 
-                             @RequestParam(required = false) Long newAuctionId,
-                             @RequestParam(required = false) String keyword,
-                             @ModelAttribute("successMessage") String successMessage) {
-        logger.info("Loading auction listings page. Keyword: {}, NewAuctionId: {}", keyword, newAuctionId);
-        
+    public String listAuctions(@RequestParam(value = "keyword", required = false) String keyword, Model model) {
+        // Explicitly remove the successMessage from the model to prevent persistence
+        if (model.containsAttribute("successMessage")) {
+            model.asMap().remove("successMessage");
+        }
+
         List<Auction> auctions;
-        
         if (keyword != null && !keyword.isEmpty()) {
             auctions = auctionService.searchAuctions(keyword);
             model.addAttribute("keyword", keyword);
-            logger.info("Search results for '{}': {} auctions found", keyword, auctions.size());
         } else {
             auctions = auctionService.getAllActiveAuctions();
-            logger.info("Loading all active auctions: {} found", auctions.size());
         }
-        
         model.addAttribute("auctions", auctions);
-        model.addAttribute("title", "Browse Auctions");
-        
-        if (newAuctionId != null) {
-            model.addAttribute("newAuctionId", newAuctionId);
-        }
-        
+
         return "auction/list";
     }
 
@@ -119,57 +112,54 @@ public class AuctionController {
 
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
-    public String viewAuction(@PathVariable Long id, 
-                            @RequestParam(value = "new", required = false) Boolean isNew,
-                            Model model) {
-        logger.info("Loading auction details page for auction ID: {}", id);
-        
-        return auctionService.getAuctionById(id)
-                .map(auction -> {
-                    model.addAttribute("auction", auction);
-                    model.addAttribute("bid", new Bid());
-                    model.addAttribute("title", auction.getTitle() + " - Auction Details");
-                    
-                    if (Boolean.TRUE.equals(isNew)) {
-                        model.addAttribute("successMessage", "Your auction has been created successfully!");
-                    }
-                    
-                    return "auction/detail";
-                })
-                .orElse("redirect:/auctions");
+    public String viewAuction(@PathVariable("id") Long id, Model model) {
+        Optional<Auction> auctionOptional = auctionService.getAuctionById(id);
+        if (!auctionOptional.isPresent()) {
+            return "redirect:/auctions";
+        }
+        Auction auction = auctionOptional.get();
+        model.addAttribute("auction", auction);
+        model.addAttribute("bid", new Bid());
+        model.addAttribute("title", auction.getTitle() + " - Auction Details");
+        return "auction/detail";
     }
 
     @PostMapping("/{id}/bid")
     @Transactional
     @ResponseBody
-    public String placeBid(@PathVariable Long id,
-                          @RequestParam BigDecimal amount,
-                          @AuthenticationPrincipal User bidder,
-                          RedirectAttributes redirectAttributes) {
+    public String placeBid(@PathVariable("id") Long auctionId, @RequestParam("amount") BigDecimal amount, @AuthenticationPrincipal User bidder, RedirectAttributes redirectAttributes) {
         try {
-            Auction auction = auctionService.getAuctionById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
-
+            Optional<Auction> auctionOptional = auctionService.getAuctionById(auctionId);
+            if (!auctionOptional.isPresent()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Auction not found!");
+                return "redirect:/auctions";
+            }
+            Auction auction = auctionOptional.get();
             auctionService.placeBid(auction, bidder, amount);
-            return "success";
+            redirectAttributes.addFlashAttribute("successMessage", "Bid placed successfully!");
         } catch (IllegalArgumentException e) {
-            return e.getMessage();
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to place bid: " + e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to place bid: An unexpected error occurred.");
+            System.err.println("Error placing bid: " + e.getMessage());
+            e.printStackTrace();
         }
+        return "redirect:/auctions/" + auctionId;
     }
 
     @GetMapping("/my-auctions")
     @Transactional(readOnly = true)
-    public String myAuctions(Model model, @AuthenticationPrincipal User user) {
-        List<Auction> userAuctions = auctionService.getUserAuctions(user);
-        model.addAttribute("auctions", userAuctions);
+    public String myAuctions(Model model, @AuthenticationPrincipal User currentUser) {
+        List<Auction> myAuctions = auctionService.getUserAuctions(currentUser);
+        model.addAttribute("auctions", myAuctions);
         model.addAttribute("title", "My Auctions");
         return "auction/my-auctions";
     }
 
     @GetMapping("/my-bids")
     @Transactional(readOnly = true)
-    public String myBids(Model model, @AuthenticationPrincipal User user) {
-        List<Auction> biddedAuctions = auctionService.getUserBids(user);
+    public String myBids(Model model, @AuthenticationPrincipal User currentUser) {
+        List<Auction> biddedAuctions = auctionService.getUserBids(currentUser);
         model.addAttribute("auctions", biddedAuctions);
         model.addAttribute("title", "My Bids");
         return "auction/my-bids";
@@ -177,16 +167,19 @@ public class AuctionController {
 
     @PostMapping("/{id}/end")
     @Transactional
-    public String endAuction(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String endAuction(@PathVariable("id") Long auctionId, RedirectAttributes redirectAttributes) {
         try {
-            Auction auction = auctionService.getAuctionById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
-            
+            Optional<Auction> auctionOptional = auctionService.getAuctionById(auctionId);
+            if (!auctionOptional.isPresent()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Auction not found!");
+                return "redirect:/auctions";
+            }
+            Auction auction = auctionOptional.get();
             auctionService.endAuction(auction);
-            redirectAttributes.addFlashAttribute("successMessage", "Auction ended successfully");
+            redirectAttributes.addFlashAttribute("successMessage", "Auction ended successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to end auction: " + e.getMessage());
         }
-        return "redirect:/auctions/" + id;
+        return "redirect:/auctions/" + auctionId;
     }
 } 
