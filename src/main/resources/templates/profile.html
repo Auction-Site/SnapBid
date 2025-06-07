@@ -60,9 +60,14 @@
             .nav-tabs .nav-link:hover {
                 border-color: #e9ecef #e9ecef #dee2e6; /* Hover effect for inactive tabs */
             }
+
+            /* Hide search form only on profile page */
+            .profile-page .navbar-collapse .d-flex.mx-auto {
+                display: none !important;
+            }
         </style>
     </head>
-    <body>
+    <body class="profile-page">
         <div layout:fragment="content">
             <div class="container">
                 <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show mb-4" role="alert">
