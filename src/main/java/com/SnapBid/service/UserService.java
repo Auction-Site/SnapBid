@@ -64,4 +64,25 @@ public class UserService implements UserDetailsService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
+
+    @Transactional
+    public User updateUser(User user) {
+        logger.info("Updating user: {}", user.getUsername());
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public void changeUserPassword(String username, String currentPassword, String newPassword) {
+        logger.info("Changing password for user: {}", username);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Current password does not match.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        logger.info("Password changed successfully for user: {}", username);
+    }
 } 
