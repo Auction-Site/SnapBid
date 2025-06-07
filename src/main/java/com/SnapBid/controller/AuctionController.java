@@ -190,4 +190,69 @@ public class AuctionController {
         }
         return "redirect:/auctions/" + auctionId;
     }
+
+    @GetMapping("/{id}/edit")
+    @Transactional(readOnly = true)
+    public String showEditForm(@PathVariable("id") Long id, Model model, @AuthenticationPrincipal User currentUser) {
+        Optional<Auction> auctionOptional = auctionService.getAuctionById(id);
+        if (!auctionOptional.isPresent()) {
+            return "redirect:/auctions";
+        }
+        
+        Auction auction = auctionOptional.get();
+        
+        // Check if the current user is the seller
+        if (!currentUser.getId().equals(auction.getSeller().getId())) {
+            return "redirect:/auctions/" + id;
+        }
+        
+        model.addAttribute("auction", auction);
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("title", "Edit Auction - " + auction.getTitle());
+        
+        return "auction/edit";
+    }
+
+    @PostMapping("/{id}/edit")
+    @Transactional
+    public String updateAuction(@PathVariable("id") Long id,
+                              @Valid @ModelAttribute("auction") Auction auctionDetails,
+                              BindingResult bindingResult,
+                              @AuthenticationPrincipal User currentUser,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+        Optional<Auction> auctionOptional = auctionService.getAuctionById(id);
+        if (!auctionOptional.isPresent()) {
+            return "redirect:/auctions";
+        }
+        
+        Auction existingAuction = auctionOptional.get();
+        
+        // Check if the current user is the seller
+        if (!currentUser.getId().equals(existingAuction.getSeller().getId())) {
+            return "redirect:/auctions/" + id;
+        }
+        
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("categories", categoryService.getAllCategories());
+            return "auction/edit";
+        }
+        
+        try {
+            Auction updatedAuction = auctionService.updateAuction(id, auctionDetails);
+            if (updatedAuction != null) {
+                redirectAttributes.addFlashAttribute("successMessage", "Auction updated successfully!");
+                return "redirect:/auctions/" + id;
+            } else {
+                model.addAttribute("error", "Failed to update auction");
+                model.addAttribute("categories", categoryService.getAllCategories());
+                return "auction/edit";
+            }
+        } catch (Exception e) {
+            logger.error("Error updating auction: {}", e.getMessage(), e);
+            model.addAttribute("error", "An error occurred while updating the auction");
+            model.addAttribute("categories", categoryService.getAllCategories());
+            return "auction/edit";
+        }
+    }
 } 
