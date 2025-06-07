@@ -121,6 +121,15 @@ public class AuctionController {
         model.addAttribute("auction", auction);
         model.addAttribute("bid", new Bid());
         model.addAttribute("title", auction.getTitle() + " - Auction Details");
+
+        // Calculate minimum bid amount
+        BigDecimal minBidAmount = auction.getCurrentPrice();
+        if (minBidAmount == null || minBidAmount.compareTo(auction.getStartingPrice()) < 0) {
+            minBidAmount = auction.getStartingPrice();
+        }
+        minBidAmount = minBidAmount.add(new BigDecimal("0.01"));
+        model.addAttribute("minBidAmount", minBidAmount);
+
         return "auction/detail";
     }
 
