@@ -1,7 +1,6 @@
 package com.SnapBid.controller;
 
 import com.SnapBid.model.Auction;
-import com.SnapBid.model.Bid;
 import com.SnapBid.model.User;
 import com.SnapBid.service.AuctionService;
 import com.SnapBid.service.BidService;
