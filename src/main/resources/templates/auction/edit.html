@@ -3,6 +3,42 @@
       layout:decorate="~{layouts/default}">
 <head>
     <title th:text="${title}">Edit Auction</title>
+    <style>
+        .auction-preview {
+            transition: all 0.3s ease;
+        }
+        .form-floating label {
+            opacity: 0.7;
+        }
+        .required::after {
+            content: '*';
+            color: red;
+            margin-left: 3px;
+        }
+        .auction-card {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .auction-card-img {
+            height: 180px;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .auction-card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background-color: #e9ecef;
+        }
+        .auction-card-img i {
+            font-size: 64px;
+            color: #adb5bd;
+        }
+    </style>
 </head>
 <body>
     <div layout:fragment="content">
@@ -131,7 +167,11 @@
                             <div class="card-body p-0">
                                 <div class="auction-card">
                                     <div class="auction-card-img">
-                                        <i class="fas fa-image"></i>
+                                        <img th:if="${auction.imageUrl != null && !#strings.isEmpty(auction.imageUrl)}" 
+                                             th:src="@{/uploads/{filename}(filename=${auction.imageUrl})}" 
+                                             alt="Auction Image">
+                                        <i th:unless="${auction.imageUrl != null && !#strings.isEmpty(auction.imageUrl)}" 
+                                           class="fas fa-image"></i>
                                     </div>
                                     <div class="p-3">
                                         <h5 id="preview-title" class="mb-2" th:text="${auction.title}">Your auction title</h5>
@@ -179,11 +219,24 @@
             const endDateInput = document.getElementById('endDate');
 
             function updatePreview() {
-                document.getElementById('preview-title').textContent = titleInput.value || 'Your auction title';
-                document.getElementById('preview-description').textContent = descriptionInput.value || 'Your auction description will appear here...';
-                document.getElementById('preview-category').textContent = categorySelect.options[categorySelect.selectedIndex].text || 'Category';
-                document.getElementById('preview-price').textContent = startingPriceInput.value ? '$' + parseFloat(startingPriceInput.value).toFixed(2) : '$0.00';
+                // Update title (max 40 chars for preview)
+                const titleText = titleInput.value || 'Your auction title';
+                document.getElementById('preview-title').textContent = titleText.length > 40 ? titleText.substring(0, 40) + '...' : titleText;
                 
+                // Update description (max 120 chars for preview)
+                const descText = descriptionInput.value || 'Your auction description will appear here...';
+                document.getElementById('preview-description').textContent = descText.length > 120 ? descText.substring(0, 120) + '...' : descText;
+                
+                // Update category
+                const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+                const categoryText = selectedOption && selectedOption.text !== 'Select a category' ? selectedOption.text : 'Category';
+                document.getElementById('preview-category').textContent = categoryText;
+                
+                // Update price
+                const price = parseFloat(startingPriceInput.value);
+                document.getElementById('preview-price').textContent = !isNaN(price) ? '$' + price.toFixed(2) : '$0.00';
+                
+                // Update end date
                 if (endDateInput.value) {
                     const endDate = new Date(endDateInput.value);
                     document.getElementById('preview-end-date').textContent = endDate.toLocaleString('en-US', {
@@ -198,11 +251,15 @@
                 }
             }
 
+            // Add event listeners for real-time preview
             titleInput.addEventListener('input', updatePreview);
             descriptionInput.addEventListener('input', updatePreview);
             categorySelect.addEventListener('change', updatePreview);
             startingPriceInput.addEventListener('input', updatePreview);
             endDateInput.addEventListener('input', updatePreview);
+
+            // Initial preview update
+            updatePreview();
         });
     </script>
 </body>

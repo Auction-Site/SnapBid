@@ -13,16 +13,12 @@ public class WebSocketController {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
-
-    // ... existing bid handling methods ...
-
     public void notifyNewAuction(Auction auction) {
         try {
             if (auction == null) {
                 logger.error("Cannot notify about null auction");
                 return;
             }
-
             logger.info("Notifying about new auction: id={}, title={}, seller={}", 
                 auction.getId(), 
                 auction.getTitle(),
