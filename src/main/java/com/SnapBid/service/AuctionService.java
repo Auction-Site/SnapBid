@@ -269,7 +269,10 @@ public class AuctionService {
 
     @Transactional(readOnly = true)
     public List<Auction> searchAuctions(String keyword) {
-        return auctionRepository.searchByKeyword(keyword);
+        logger.info("Searching auctions with keyword: {}", keyword);
+        List<Auction> results = auctionRepository.searchByKeyword(keyword);
+        logger.info("Found {} auctions matching keyword: {}", results.size(), keyword);
+        return results;
     }
 
     @Transactional(readOnly = true)

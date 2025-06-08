@@ -60,6 +60,11 @@ public class AuctionController {
         if (keyword != null && !keyword.isEmpty()) {
             auctions = auctionService.searchAuctions(keyword);
             model.addAttribute("keyword", keyword);
+            if (auctions.isEmpty()) {
+                model.addAttribute("infoMessage", "No auctions found matching '" + keyword + "'");
+            } else {
+                model.addAttribute("infoMessage", "Found " + auctions.size() + " auctions matching '" + keyword + "'");
+            }
         } else {
             auctions = auctionService.getAllActiveAuctions();
         }
