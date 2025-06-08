@@ -9,7 +9,6 @@ SnapBid is a real-time online auction platform built with Spring Boot that allow
 - Real-time bidding functionality
 - User dashboard for tracking auctions and bids
 - Search and filter auction items
-- Email notifications for bid updates and auction endings
 
 ## Prerequisites
 
