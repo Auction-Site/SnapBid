@@ -23,9 +23,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/auctions")
@@ -50,13 +53,22 @@ public class AuctionController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    public String listAuctions(@RequestParam(value = "keyword", required = false) String keyword, Model model) {
+    public String listAuctions(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "priceRange", required = false) String priceRange,
+            @RequestParam(value = "sortBy", required = false) String sortBy,
+            @RequestParam(value = "timeRemaining", required = false) String timeRemaining,
+            Model model) {
+        
         // Explicitly remove the successMessage from the model to prevent persistence
         if (model.containsAttribute("successMessage")) {
             model.asMap().remove("successMessage");
         }
 
         List<Auction> auctions;
+        
+        // Apply filters
         if (keyword != null && !keyword.isEmpty()) {
             auctions = auctionService.searchAuctions(keyword);
             model.addAttribute("keyword", keyword);
@@ -68,7 +80,70 @@ public class AuctionController {
         } else {
             auctions = auctionService.getAllActiveAuctions();
         }
+
+        // Apply category filter
+        if (categoryId != null) {
+            auctions = auctions.stream()
+                .filter(auction -> auction.getCategory().getId().equals(categoryId))
+                .collect(Collectors.toList());
+            model.addAttribute("categoryId", categoryId);
+        }
+
+        // Apply price range filter
+        if (priceRange != null && !priceRange.isEmpty()) {
+            BigDecimal minPrice;
+            BigDecimal maxPrice;
+            
+            if (priceRange.equals("1000+")) {
+                minPrice = new BigDecimal("1000");
+                maxPrice = new BigDecimal("999999999");
+            } else {
+                String[] range = priceRange.split("-");
+                minPrice = new BigDecimal(range[0]);
+                maxPrice = new BigDecimal(range[1]);
+            }
+            
+            auctions = auctions.stream()
+                .filter(auction -> {
+                    BigDecimal price = auction.getCurrentPrice();
+                    return price.compareTo(minPrice) >= 0 && price.compareTo(maxPrice) <= 0;
+                })
+                .collect(Collectors.toList());
+            model.addAttribute("priceRange", priceRange);
+        }
+
+        // Apply time remaining filter
+        if (timeRemaining != null && !timeRemaining.isEmpty()) {
+            int hours = Integer.parseInt(timeRemaining);
+            LocalDateTime cutoffTime = LocalDateTime.now().plusHours(hours);
+            auctions = auctions.stream()
+                .filter(auction -> auction.getEndDate().isBefore(cutoffTime))
+                .collect(Collectors.toList());
+            model.addAttribute("timeRemaining", timeRemaining);
+        }
+
+        // Apply sorting
+        if (sortBy != null) {
+            switch (sortBy) {
+                case "ending":
+                    auctions.sort(Comparator.comparing(Auction::getEndDate));
+                    break;
+                case "price-low":
+                    auctions.sort(Comparator.comparing(Auction::getCurrentPrice));
+                    break;
+                case "price-high":
+                    auctions.sort(Comparator.comparing(Auction::getCurrentPrice).reversed());
+                    break;
+                case "newest":
+                default:
+                    auctions.sort(Comparator.comparing(Auction::getCreatedAt).reversed());
+                    break;
+            }
+            model.addAttribute("sortBy", sortBy);
+        }
+
         model.addAttribute("auctions", auctions);
+        model.addAttribute("categories", categoryService.getAllCategories());
 
         return "auction/list";
     }

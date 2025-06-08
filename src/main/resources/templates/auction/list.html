@@ -143,46 +143,49 @@
 
             <!-- Filters Section -->
             <div class="filter-section mb-4">
-                <div class="row">
+                <form th:action="@{/auctions}" method="get" class="row">
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Category</label>
-                        <select class="form-select">
+                        <select class="form-select" name="categoryId" onchange="this.form.submit()">
                             <option value="">All Categories</option>
                             <option th:each="category : ${categories}"
                                     th:value="${category.id}"
-                                    th:text="${category.name}">Category</option>
+                                    th:text="${category.name}"
+                                    th:selected="${categoryId != null && categoryId == category.id}">Category</option>
                         </select>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Price Range</label>
-                        <select class="form-select">
+                        <select class="form-select" name="priceRange" onchange="this.form.submit()">
                             <option value="">Any Price</option>
-                            <option value="0-100">$0 - $100</option>
-                            <option value="100-500">$100 - $500</option>
-                            <option value="500-1000">$500 - $1000</option>
-                            <option value="1000+">$1000+</option>
+                            <option value="0-100" th:selected="${priceRange == '0-100'}">$0 - $100</option>
+                            <option value="100-500" th:selected="${priceRange == '100-500'}">$100 - $500</option>
+                            <option value="500-1000" th:selected="${priceRange == '500-1000'}">$500 - $1000</option>
+                            <option value="1000+" th:selected="${priceRange == '1000+'}">$1000+</option>
                         </select>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Sort By</label>
-                        <select class="form-select">
-                            <option value="newest">Newest First</option>
-                            <option value="ending">Ending Soon</option>
-                            <option value="price-low">Price: Low to High</option>
-                            <option value="price-high">Price: High to Low</option>
+                        <select class="form-select" name="sortBy" onchange="this.form.submit()">
+                            <option value="newest" th:selected="${sortBy == 'newest'}">Newest First</option>
+                            <option value="ending" th:selected="${sortBy == 'ending'}">Ending Soon</option>
+                            <option value="price-low" th:selected="${sortBy == 'price-low'}">Price: Low to High</option>
+                            <option value="price-high" th:selected="${sortBy == 'price-high'}">Price: High to Low</option>
                         </select>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Time Remaining</label>
-                        <select class="form-select">
+                        <select class="form-select" name="timeRemaining" onchange="this.form.submit()">
                             <option value="">Any Time</option>
-                            <option value="1">Less than 1 hour</option>
-                            <option value="24">Less than 24 hours</option>
-                            <option value="72">Less than 3 days</option>
-                            <option value="168">Less than 1 week</option>
+                            <option value="1" th:selected="${timeRemaining == '1'}">Less than 1 hour</option>
+                            <option value="24" th:selected="${timeRemaining == '24'}">Less than 24 hours</option>
+                            <option value="72" th:selected="${timeRemaining == '72'}">Less than 3 days</option>
+                            <option value="168" th:selected="${timeRemaining == '168'}">Less than 1 week</option>
                         </select>
                     </div>
-                </div>
+                    <!-- Hidden input to preserve search keyword -->
+                    <input type="hidden" name="keyword" th:value="${keyword}">
+                </form>
             </div>
 
             <!-- Auctions Grid -->
