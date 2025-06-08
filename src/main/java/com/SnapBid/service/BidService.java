@@ -98,4 +98,28 @@ public class BidService {
         return bidRepository.findTopByAuctionOrderByAmountDesc(auction)
             .orElse(null);
     }
+
+    @Transactional
+    public Bid createBid(Bid bid, User bidder) {
+        // Validate auction is active
+        if (bid.getAuction().getStatus() != AuctionStatus.ACTIVE) {
+            throw new IllegalStateException("Cannot bid on an auction that is not active");
+        }
+
+        // Validate auction hasn't ended
+        if (bid.getAuction().getEndDate().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("Cannot bid on an auction that has ended");
+        }
+
+        // Validate bid amount is higher than current highest bid
+        Bid highestBid = bidRepository.findTopByAuctionOrderByAmountDesc(bid.getAuction())
+            .orElse(null);
+        if (highestBid != null && bid.getAmount().compareTo(highestBid.getAmount()) <= 0) {
+            throw new IllegalStateException("Bid amount must be higher than the current highest bid");
+        }
+
+        bid.setBidder(bidder);
+        bid.setBidTime(LocalDateTime.now());
+        return bidRepository.save(bid);
+    }
 } 

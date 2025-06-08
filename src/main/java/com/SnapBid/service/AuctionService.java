@@ -10,6 +10,7 @@ import com.SnapBid.validation.OnCreate;
 import com.SnapBid.websocket.WebSocketController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
@@ -167,9 +168,40 @@ public class AuctionService {
 
     @Transactional
     public void endAuction(Auction auction) {
-        auction.setStatus(AuctionStatus.ENDED);
-        auction.setUpdatedAt(LocalDateTime.now());
-        auctionRepository.save(auction);
+        try {
+            logger.info("Starting auction end process for auction: id={}", auction.getId());
+            
+            // Get the highest bid
+            Optional<Bid> highestBidOpt = bidRepository.findTopByAuctionOrderByAmountDesc(auction);
+            logger.info("Found highest bid for auction: id={}, hasBid={}", 
+                auction.getId(), 
+                highestBidOpt.isPresent());
+            
+            // Set the winner if there are any bids
+            if (highestBidOpt.isPresent()) {
+                Bid highestBid = highestBidOpt.get();
+                auction.setWinner(highestBid.getBidder());
+                logger.info("Set winner for auction: id={}, winner={}", 
+                    auction.getId(), 
+                    highestBid.getBidder().getUsername());
+            }
+            
+            auction.setStatus(AuctionStatus.ENDED);
+            auction.setUpdatedAt(LocalDateTime.now());
+            
+            // Save the auction
+            Auction savedAuction = auctionRepository.save(auction);
+            logger.info("Successfully saved ended auction: id={}, status={}", 
+                savedAuction.getId(), 
+                savedAuction.getStatus());
+            
+        } catch (Exception e) {
+            logger.error("Error ending auction: id={}, error={}", 
+                auction.getId(), 
+                e.getMessage(), 
+                e);
+            throw new RuntimeException("Failed to end auction: " + e.getMessage(), e);
+        }
     }
 
     @Transactional
@@ -324,6 +356,25 @@ public class AuctionService {
 
         if (auction.getSeller().equals(bidder)) {
             throw new IllegalArgumentException("Seller cannot bid on their own auction");
+        }
+    }
+
+    private Bid getHighestBid(Auction auction) {
+        return bidRepository.findTopByAuctionOrderByAmountDesc(auction)
+            .orElse(null);
+    }
+
+    @Scheduled(fixedRate = 60000) // Run every minute
+    @Transactional
+    public void checkAndEndExpiredAuctions() {
+        logger.info("Checking for expired auctions...");
+        List<Auction> activeAuctions = auctionRepository.findByStatus(AuctionStatus.ACTIVE);
+        
+        for (Auction auction : activeAuctions) {
+            if (auction.getEndDate().isBefore(LocalDateTime.now())) {
+                logger.info("Ending expired auction: id={}", auction.getId());
+                endAuction(auction);
+            }
         }
     }
 } 

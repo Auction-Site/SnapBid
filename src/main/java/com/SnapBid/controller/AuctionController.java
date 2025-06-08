@@ -201,15 +201,27 @@ public class AuctionController {
     @Transactional
     public String endAuction(@PathVariable("id") Long auctionId, RedirectAttributes redirectAttributes) {
         try {
+            logger.info("Attempting to end auction with ID: {}", auctionId);
+            
             Optional<Auction> auctionOptional = auctionService.getAuctionById(auctionId);
             if (!auctionOptional.isPresent()) {
+                logger.warn("Auction not found with ID: {}", auctionId);
                 redirectAttributes.addFlashAttribute("errorMessage", "Auction not found!");
                 return "redirect:/auctions";
             }
+            
             Auction auction = auctionOptional.get();
+            logger.info("Found auction: id={}, status={}, seller={}", 
+                auction.getId(), 
+                auction.getStatus(), 
+                auction.getSeller().getUsername());
+            
             auctionService.endAuction(auction);
+            logger.info("Successfully ended auction: id={}", auctionId);
+            
             redirectAttributes.addFlashAttribute("successMessage", "Auction ended successfully!");
         } catch (Exception e) {
+            logger.error("Failed to end auction: id={}, error={}", auctionId, e.getMessage(), e);
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to end auction: " + e.getMessage());
         }
         return "redirect:/auctions/" + auctionId;
