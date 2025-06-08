@@ -33,4 +33,7 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
 
     // Method to find bids by bidder and auction status (for 'My Bids' or 'Won Auctions' logic)
     List<Bid> findByBidderAndAuctionStatus(User bidder, AuctionStatus status);
+
+    // Method to delete all bids for an auction
+    void deleteByAuction(Auction auction);
 } 

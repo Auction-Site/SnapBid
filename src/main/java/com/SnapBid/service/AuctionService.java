@@ -138,7 +138,21 @@ public class AuctionService {
 
     @Transactional
     public void deleteAuction(Long id) {
-        auctionRepository.deleteById(id);
+        Optional<Auction> optionalAuction = auctionRepository.findById(id);
+        if (optionalAuction.isPresent()) {
+            Auction auction = optionalAuction.get();
+            
+            // Delete all bids associated with this auction
+            bidRepository.deleteByAuction(auction);
+            
+            // Delete the auction
+            auctionRepository.delete(auction);
+            
+            logger.info("Auction and associated bids deleted successfully: id={}", id);
+        } else {
+            logger.warn("Attempted to delete non-existent auction: id={}", id);
+            throw new RuntimeException("Auction not found");
+        }
     }
 
     @Transactional(readOnly = true)

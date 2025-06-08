@@ -279,4 +279,34 @@ public class AuctionController {
             return "auction/edit";
         }
     }
+
+    @PostMapping("/{id}/delete")
+    @Transactional
+    public String deleteAuction(@PathVariable("id") Long id,
+                              @AuthenticationPrincipal User currentUser,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            Optional<Auction> auctionOptional = auctionService.getAuctionById(id);
+            if (!auctionOptional.isPresent()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Auction not found!");
+                return "redirect:/auctions";
+            }
+            
+            Auction auction = auctionOptional.get();
+            
+            // Check if the current user is the seller
+            if (!currentUser.getId().equals(auction.getSeller().getId())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "You don't have permission to delete this auction!");
+                return "redirect:/auctions/" + id;
+            }
+            
+            auctionService.deleteAuction(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Auction deleted successfully!");
+            return "redirect:/auctions";
+        } catch (Exception e) {
+            logger.error("Error deleting auction: {}", e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to delete auction: " + e.getMessage());
+            return "redirect:/auctions/" + id;
+        }
+    }
 } 
