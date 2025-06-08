@@ -126,7 +126,7 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <form id="auctionForm" th:action="@{/auctions/create}" method="post" th:object="${auction}" class="needs-validation" novalidate>
+                            <form id="auctionForm" th:action="@{/auctions/create}" method="post" th:object="${auction}" class="needs-validation" enctype="multipart/form-data" novalidate>
                                 <div class="mb-4">
                                     <h6 class="fw-bold mb-3">Basic Information</h6>
                                     
@@ -206,15 +206,15 @@
                                 </div>
                                 
                                 <div class="mb-4">
-                                    <h6 class="fw-bold mb-3">Images (Coming Soon)</h6>
-                                    <div class="image-drop-area" id="dropArea">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p class="mb-2">Drag & drop your images here or click to browse</p>
-                                        <p class="text-muted small mb-0">Supports: JPG, PNG, GIF (Max 5 images, 5MB each)</p>
-                                        <input type="file" id="imageUpload" multiple accept="image/*" style="display: none;">
+                                    <h6 class="fw-bold mb-3">Auction Image</h6>
+                                    <div class="mb-3">
+                                        <label for="image" class="form-label">Upload Cover Image</label>
+                                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                        <div class="form-text">Upload a cover image for your auction (JPG, PNG, GIF - Max 5MB)</div>
                                     </div>
-                                    <div id="imagePreview"></div>
-                                    <div class="form-text mt-2">High-quality images can increase your chances of selling</div>
+                                    <div id="imagePreview" class="mt-3">
+                                        <!-- Image preview will be shown here -->
+                                    </div>
                                 </div>
                                 
                                 <hr>
@@ -478,6 +478,41 @@
                     // Reset to default icon if no images
                     auctionCardImg.innerHTML = `<i class="fas fa-image"></i>`;
                 }
+            }
+        });
+
+        // Image preview functionality
+        document.getElementById('image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Check file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    this.value = '';
+                    return;
+                }
+
+                // Check file type
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file');
+                    this.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('imagePreview');
+                    preview.innerHTML = `
+                        <div class="position-relative d-inline-block">
+                            <img src="${e.target.result}" class="img-thumbnail" style="max-height: 200px;">
+                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" 
+                                    onclick="document.getElementById('image').value = ''; document.getElementById('imagePreview').innerHTML = '';">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
             }
         });
     </script>

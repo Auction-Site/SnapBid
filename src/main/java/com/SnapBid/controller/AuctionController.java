@@ -10,17 +10,22 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/auctions")
@@ -32,6 +37,9 @@ public class AuctionController {
     private final AuctionService auctionService;
     private final UserService userService;
     private final CategoryService categoryService;
+
+    @Value("${app.upload.dir}")
+    private String uploadDir;
 
     @Autowired
     public AuctionController(AuctionService auctionService, UserService userService, CategoryService categoryService) {
@@ -74,6 +82,7 @@ public class AuctionController {
     @PostMapping("/create")
     @Transactional
     public String createAuction(@Valid @ModelAttribute("auction") Auction auction,
+                              @RequestParam("image") MultipartFile image,
                               BindingResult bindingResult,
                               @AuthenticationPrincipal User seller,
                               Model model,
@@ -87,6 +96,22 @@ public class AuctionController {
         }
 
         try {
+            // Handle image upload
+            if (image != null && !image.isEmpty()) {
+                String fileName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
+                File uploadPath = new File(uploadDir);
+                if (!uploadPath.exists()) {
+                    uploadPath.mkdirs();
+                }
+                
+                File destFile = new File(uploadPath.getAbsolutePath() + File.separator + fileName);
+                image.transferTo(destFile);
+                
+                // Set the image URL in the auction
+                auction.setImageUrl(fileName);
+                logger.info("Image uploaded successfully: {}", fileName);
+            }
+
             Auction savedAuction = auctionService.createAuction(auction, seller, bindingResult);
             if (savedAuction != null) {
                 redirectAttributes.addFlashAttribute("successMessage", "Auction created successfully!");
@@ -96,6 +121,11 @@ public class AuctionController {
                 model.addAttribute("categories", categoryService.getAllCategories());
                 return "auction/create";
             }
+        } catch (IOException e) {
+            logger.error("Error uploading image: {}", e.getMessage(), e);
+            model.addAttribute("error", "Failed to upload image: " + e.getMessage());
+            model.addAttribute("categories", categoryService.getAllCategories());
+            return "auction/create";
         } catch (Exception e) {
             logger.error("Error creating auction: {}", e.getMessage(), e);
             model.addAttribute("error", "An error occurred while creating the auction");

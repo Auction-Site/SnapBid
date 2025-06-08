@@ -158,7 +158,19 @@
             <!-- Auctions Grid -->
             <div class="row" id="auctionsRow">
                 <div th:each="auction : ${auctions}" class="col-md-4 mb-4">
-                    <div class="card auction-card" th:classappend="${auction.id == newAuctionId ? 'highlight-new' : ''}">
+                    <div class="card h-100">
+                        <div class="auction-image-container" style="height: 200px; overflow: hidden;">
+                            <img th:if="${auction.imageUrl != null && !#strings.isEmpty(auction.imageUrl)}" 
+                                 th:src="@{/uploads/{filename}(filename=${auction.imageUrl})}" 
+                                 class="img-fluid w-100 h-100" 
+                                 style="object-fit: cover;"
+                                 alt="Auction Image">
+                            <div th:unless="${auction.imageUrl != null && !#strings.isEmpty(auction.imageUrl)}" 
+                                 class="no-image-placeholder d-flex align-items-center justify-content-center h-100"
+                                 style="background-color: #f8f9fa;">
+                                <i class="fas fa-image fa-2x text-muted"></i>
+                            </div>
+                        </div>
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <span class="badge bg-primary" th:text="${auction.category.name}">Category</span>
@@ -282,7 +294,15 @@
                 });
                 
                 col.innerHTML = `
-                    <div class="card auction-card">
+                    <div class="card h-100">
+                        <div class="auction-image-container" style="height: 200px; overflow: hidden;">
+                            ${auction.imageUrl ? 
+                                `<img src="/uploads/${auction.imageUrl}" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="Auction Image">` :
+                                `<div class="no-image-placeholder d-flex align-items-center justify-content-center h-100" style="background-color: #f8f9fa;">
+                                    <i class="fas fa-image fa-2x text-muted"></i>
+                                </div>`
+                            }
+                        </div>
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <span class="badge bg-primary">${auction.category}</span>
@@ -313,4 +333,9 @@
                             </div>
                         </div>
                     </div>
-                `
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

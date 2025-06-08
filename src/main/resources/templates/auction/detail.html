@@ -156,6 +156,24 @@
                 </div>
             </div>
 
+            <!-- Auction Image -->
+            <div class="card mb-4">
+                <div class="card-body p-0">
+                    <div class="auction-image-container">
+                        <img th:if="${auction.imageUrl != null}" 
+                             th:src="@{/uploads/{filename}(filename=${auction.imageUrl})}" 
+                             class="img-fluid w-100" 
+                             style="max-height: 500px; object-fit: cover;"
+                             alt="Auction Image">
+                        <div th:unless="${auction.imageUrl != null}" 
+                             class="no-image-placeholder d-flex align-items-center justify-content-center"
+                             style="height: 300px; background-color: #f8f9fa;">
+                            <i class="fas fa-image fa-3x text-muted"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row">
                 <!-- Main Content -->
                 <div class="col-md-8">

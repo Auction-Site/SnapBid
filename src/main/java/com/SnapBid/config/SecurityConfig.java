@@ -22,7 +22,7 @@ public class SecurityConfig {
         
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/home", "/about", "/contact", "/register", "/login", "/css/**", "/js/**", "/images/**", "/error", "/webjars/**").permitAll()
+                .requestMatchers("/", "/home", "/about", "/contact", "/register", "/login", "/css/**", "/js/**", "/images/**", "/uploads/**", "/error", "/webjars/**").permitAll()
                 .requestMatchers("/auctions", "/auctions/*/").permitAll()
                 .requestMatchers("/profile", "/profile/**", "/create", "/bids/**", "/api/bids/**", "/auctions/create", "/auctions/my-auctions", "/auctions/my-bids").authenticated()
                 .anyRequest().permitAll()
