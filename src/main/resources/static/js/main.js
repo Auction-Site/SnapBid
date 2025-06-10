@@ -1,11 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
     
-    // Auto-dismiss alerts after 5 seconds
     const autoAlerts = document.querySelectorAll('.alert-autodismiss');
     autoAlerts.forEach(function(alert) {
         setTimeout(function() {
@@ -16,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     });
     
-    // Add active class to current navigation item
     const currentLocation = window.location.pathname;
     const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
     

@@ -1,15 +1,8 @@
-/**
- * SnapBid WebSocket Client
- * Handles real-time bidding communication
- */
 
 let stompClient = null;
 let auctionId = null;
 let connected = false;
 
-/**
- * Connect to the WebSocket server
- */
 function connectWebSocket() {
     if (connected) {
         console.log("Already connected to WebSocket");
@@ -22,12 +15,9 @@ function connectWebSocket() {
     stompClient.connect({}, function(frame) {
         console.log('Connected to WebSocket: ' + frame);
         connected = true;
-        
-        // Get the auction ID from the page URL
         auctionId = getCurrentAuctionId();
         
         if (auctionId) {
-            // Subscribe to updates for this specific auction
             stompClient.subscribe('/topic/auction/' + auctionId, function(message) {
                 handleBidUpdate(JSON.parse(message.body));
             });
@@ -39,14 +29,10 @@ function connectWebSocket() {
         console.error('WebSocket connection error: ', error);
         connected = false;
         
-        // Try to reconnect after a delay
         setTimeout(connectWebSocket, 5000);
     });
 }
 
-/**
- * Disconnect from WebSocket server
- */
 function disconnectWebSocket() {
     if (stompClient !== null) {
         stompClient.disconnect();
@@ -55,13 +41,9 @@ function disconnectWebSocket() {
     }
 }
 
-/**
- * Send a bid via WebSocket
- */
 function sendBid(bidAmount) {
     if (!connected || !stompClient) {
         console.error("Cannot send bid via WebSocket: Not connected");
-        // Fall back to AJAX
         return sendBidViaAjax(bidAmount);
     }
     
@@ -73,7 +55,7 @@ function sendBid(bidAmount) {
     const bidMessage = {
         auctionId: auctionId,
         bidAmount: bidAmount,
-        bidderUsername: currentUsername // This should be set globally from the server
+        bidderUsername: currentUsername
     };
     
     try {
@@ -82,14 +64,10 @@ function sendBid(bidAmount) {
         return true;
     } catch (error) {
         console.error("Error sending bid via WebSocket:", error);
-        // Fall back to AJAX
         return sendBidViaAjax(bidAmount);
     }
 }
 
-/**
- * Send a bid via AJAX as fallback
- */
 function sendBidViaAjax(bidAmount) {
     console.log("Falling back to AJAX for bid submission");
     
@@ -118,7 +96,6 @@ function sendBidViaAjax(bidAmount) {
     })
     .then(data => {
         console.log("Bid placed successfully via AJAX:", data);
-        // The WebSocket will automatically update all clients
     })
     .catch(error => {
         console.error("Error placing bid:", error);
@@ -128,30 +105,16 @@ function sendBidViaAjax(bidAmount) {
     return true;
 }
 
-/**
- * Handle incoming bid updates
- */
 function handleBidUpdate(bidMessage) {
     console.log("Received bid update: ", bidMessage);
-    
-    // Remove "no bids" message if it exists
     const noBidsMessage = document.getElementById('no-bids-message');
     if (noBidsMessage) {
         noBidsMessage.style.display = 'none';
     }
-    
-    // Update UI with new bid information
     updateBidDisplay(bidMessage);
-    
-    // Show notification
     showBidNotification(bidMessage);
 }
-
-/**
- * Update the bid display with new information
- */
 function updateBidDisplay(bidMessage) {
-    // Update current price display
     const currentPriceElement = document.getElementById('current-price');
     if (currentPriceElement) {
         currentPriceElement.textContent = formatCurrency(bidMessage.currentHighestBid);
@@ -215,9 +178,6 @@ function showBidNotification(bidMessage) {
     }, 5000);
 }
 
-/**
- * Show an error message
- */
 function showError(message) {
     const errorContainer = document.createElement('div');
     errorContainer.className = 'alert alert-danger';
@@ -234,9 +194,6 @@ function showError(message) {
     }
 }
 
-/**
- * Format a number as currency
- */
 function formatCurrency(amount) {
     return '$' + parseFloat(amount).toFixed(2);
 }
@@ -292,7 +249,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Disconnect when navigating away
 window.addEventListener('beforeunload', function() {
     disconnectWebSocket();
 }); 

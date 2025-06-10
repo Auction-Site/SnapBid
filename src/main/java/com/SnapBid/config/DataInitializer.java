@@ -20,7 +20,6 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner initData() {
         return args -> {
-            // Check if categories already exist
             if (categoryRepository.count() == 0) {
                 logger.info("No categories found. Initializing default categories.");
                 

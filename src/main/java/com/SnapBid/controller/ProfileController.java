@@ -110,13 +110,7 @@ public class ProfileController {
         }
 
         try {
-            // Update only the fields that are allowed to be updated through this form
-            // existingUser.setFirstName(userDetails.getFirstName());
-            // existingUser.setLastName(userDetails.getLastName());
             existingUser.setEmail(userDetails.getEmail());
-            // existingUser.setPhoneNumber(userDetails.getPhoneNumber());
-            // existingUser.setAddress(userDetails.getAddress());
-
             userService.updateUser(existingUser);
             redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
             return "redirect:/profile";

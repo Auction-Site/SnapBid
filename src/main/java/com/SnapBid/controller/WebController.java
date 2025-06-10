@@ -82,28 +82,4 @@ public class WebController {
         model.addAttribute("title", "Create Auction");
         return "redirect:/auctions/create";
     }
-
-    @GetMapping("/about")
-    public String about(Model model) {
-        model.addAttribute("title", "About Us");
-        return "about";
-    }
-
-    @GetMapping("/contact")
-    public String contact(Model model) {
-        model.addAttribute("title", "Contact Us");
-        return "contact";
-    }
-
-    @GetMapping("/terms")
-    public String terms(Model model) {
-        model.addAttribute("title", "Terms & Conditions");
-        return "terms";
-    }
-
-    @GetMapping("/privacy")
-    public String privacy(Model model) {
-        model.addAttribute("title", "Privacy Policy");
-        return "privacy";
-    }
 } 

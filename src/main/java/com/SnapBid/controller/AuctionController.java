@@ -61,14 +61,11 @@ public class AuctionController {
             @RequestParam(value = "timeRemaining", required = false) String timeRemaining,
             Model model) {
         
-        // Explicitly remove the successMessage from the model to prevent persistence
         if (model.containsAttribute("successMessage")) {
             model.asMap().remove("successMessage");
         }
 
         List<Auction> auctions;
-        
-        // Apply filters
         if (keyword != null && !keyword.isEmpty()) {
             auctions = auctionService.searchAuctions(keyword);
             model.addAttribute("keyword", keyword);

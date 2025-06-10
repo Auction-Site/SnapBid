@@ -46,7 +46,6 @@ public class BidRestController {
             // Get current authenticated user
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             
-            // Check if user is authenticated
             if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
                 logger.warn("Unauthorized bid attempt for auction {}", auctionId);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -55,11 +54,7 @@ public class BidRestController {
             
             String username = auth.getName();
             logger.info("Processing bid from user: {}", username);
-            
-            // Get user
             User bidder = userService.findByUsername(username);
-            
-            // Get auction
             Auction auction = auctionService.findById(auctionId);
             if (auction == null) {
                 logger.warn("Auction not found: {}", auctionId);
@@ -67,14 +62,11 @@ public class BidRestController {
                         .body(Map.of("error", "Auction not found"));
             }
             
-            // Ensure the amount field exists in the payload
             if (!payload.containsKey("amount")) {
                 logger.warn("No amount specified in bid payload");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("error", "Bid amount is required"));
             }
-            
-            // Extract and validate bid amount
             BigDecimal amount;
             try {
                 amount = new BigDecimal(payload.get("amount").toString());
@@ -83,11 +75,8 @@ public class BidRestController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("error", "Invalid bid amount format"));
             }
-            
-            // Place bid
             Bid bid = bidService.placeBid(auction, bidder, amount);
             
-            // Create response object
             BidMessage response = new BidMessage(
                 auction.getId(),
                 bid.getAmount().doubleValue(),
@@ -95,7 +84,6 @@ public class BidRestController {
                 LocalDateTime.now().format(FORMATTER),
                 auction.getCurrentPrice().doubleValue()
             );
-            
             logger.info("Bid placed successfully: auction={}, user={}, amount={}", 
                     auctionId, username, amount);
             

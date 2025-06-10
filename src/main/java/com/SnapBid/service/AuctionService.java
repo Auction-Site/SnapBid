@@ -59,10 +59,8 @@ public class AuctionService {
         logger.info("Starting auction creation process for seller: {}", seller.getUsername());
         
         try {
-            // Set required fields before validation
             LocalDateTime now = LocalDateTime.now();
             
-            // If start date is null or in the past, set it to current time
             if (auction.getStartDate() == null || auction.getStartDate().isBefore(now)) {
                 auction.setStartDate(now);
             }
@@ -143,10 +141,7 @@ public class AuctionService {
         if (optionalAuction.isPresent()) {
             Auction auction = optionalAuction.get();
             
-            // Delete all bids associated with this auction
             bidRepository.deleteByAuction(auction);
-            
-            // Delete the auction
             auctionRepository.delete(auction);
             
             logger.info("Auction and associated bids deleted successfully: id={}", id);
