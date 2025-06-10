@@ -174,11 +174,6 @@ public class Auction {
     public void setBids(List<Bid> bids) {
         this.bids = bids;
     }
-
-    /**
-     * Gets the highest bid for this auction
-     * @return The highest bid, or null if no bids exist
-     */
     public Bid getHighestBid() {
         if (bids == null || bids.isEmpty()) {
             return null;

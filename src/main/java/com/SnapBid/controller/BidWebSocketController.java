@@ -24,7 +24,6 @@ public class BidWebSocketController {
         this.messagingTemplate = messagingTemplate;
     }
 
-    // Handles bid messages sent to "/app/bid" and broadcasts to "/topic/auction/{auctionId}"
     @MessageMapping("/bid")
     public void processBid(@Payload BidMessage bidMessage) {
         LocalDateTime now = LocalDateTime.now();

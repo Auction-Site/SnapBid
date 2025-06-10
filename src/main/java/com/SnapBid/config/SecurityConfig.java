@@ -44,11 +44,6 @@ public class SecurityConfig {
                 .deleteCookies("JSESSIONID", "remember-me")
                 .permitAll()
             )
-            .rememberMe(remember -> remember
-                .key("snapbid-remember-me-key")
-                .tokenValiditySeconds(86400) // 1 day
-                .rememberMeParameter("remember-me")
-            )
             .sessionManagement(session -> session
                 .invalidSessionUrl("/login?expired=true")
                 .maximumSessions(1)
@@ -58,7 +53,6 @@ public class SecurityConfig {
                 .accessDeniedPage("/login?denied=true")
             );
 
-        // Add CSRF protection but exclude the API endpoints
         http.csrf(csrf -> csrf
             .ignoringRequestMatchers("/api/**")
         );

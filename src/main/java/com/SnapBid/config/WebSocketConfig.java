@@ -20,6 +20,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*") // Allow connections from any origin
-                .withSockJS(); // Enable SockJS fallback options
+                .withSockJS();
     }
 } 

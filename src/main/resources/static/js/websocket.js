@@ -209,8 +209,6 @@ function getCurrentAuctionId() {
     if (matches && matches.length > 1) {
         return matches[1];
     }
-    
-    // If not found in path, check for query parameter
     const urlParams = new URLSearchParams(window.location.search);
     const idParam = urlParams.get('id');
     
